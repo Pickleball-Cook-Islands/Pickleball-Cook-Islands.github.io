@@ -350,7 +350,11 @@ const LOGO='assets/img/logo.png';
 const CRAB='assets/img/crab.png';
 const CIO='assets/img/cio.jpg';
 const PINK_POSTER='assets/img/pink-poster.jpg';
-const LEAGUE_URL='https://claude.ai/code/artifact/88c1f154-338a-441e-ba0f-05fb3085287c';
+// Leagues: one entry per folder in leagues/. The first one is the current league.
+const LEAGUES=[
+  {id:'tjpl4',name:"Trader Jack's Pickleball League IV",sub:'Fixtures, scores and ladders'}
+];
+const leagueUrl=id=>'leagues/league.html?l='+encodeURIComponent(id||LEAGUES[0].id);
 const FB='https://www.facebook.com/pickleballcookislands';
 
 // Members drop-in sessions (weekly). day: 0=Sun..6=Sat. Shown 4 weeks ahead.
@@ -447,12 +451,12 @@ function evCard(e){
   const lg=e.kind==='league';
   const pl=!lg&&e.place&&VENUES[e.place]?`<a href="${mapUrl(VENUES[e.place])}" target="_blank" rel="noopener">${esc(e.place)}</a>`:(e.place?esc(e.place):'');
   const w=[e.time?esc(e.time):'',pl].filter(Boolean).join(' · ');
-  const open=lg?`<a class="ev ${e.kind}" href="${LEAGUE_URL}" target="_blank" rel="noopener">`:`<div class="ev ${e.kind}${e.big?' big':''}">`;
+  const open=lg?`<a class="ev ${e.kind}" href="${leagueUrl(e.league)}">`:`<div class="ev ${e.kind}${e.big?' big':''}">`;
   return `${open}${dateBlock(e)}<div class="txt"><span class="tag ${e.kind}">${KIND[e.kind]}</span>${e.moved?'<span class="tag moved">Venue change</span>':''}<h3>${e.kind==='league'?`<img class="crab" src="${CRAB}" alt="">`:''}${esc(e.title)}</h3><div class="w">${w}</div>${chips}${e.note?`<div class="w">${esc(e.note)}</div>`:''}${lg?`<div class="golink">Fixtures &amp; ladders →</div>`:''}</div>${lg?'</a>':'</div>'}`}
 function newsCard(n){return `<article class="news${n.tj?' tj':''}${n.pink?' pk':''}"><div class="d">${esc(n.date)}</div><h3>${n.tj?`<img class="crab" src="${CRAB}" alt="">`:''}${esc(n.title)}</h3><p>${esc(n.text)}</p>${n.url?`<a class="readmore" href="${esc(n.url)}" target="_blank" rel="noopener">Read on ${esc(n.src||'the web')} →</a>`:''}${n.img==='poster'?`<img class="poster" src="${PINK_POSTER}" alt="Pickle in Pink poster: free open public session, Breast Cancer Awareness special event, Mon 26 Oct 5–7pm at TSA">`:''}</article>`}
 
 function linkCards(){return `<div class="links">
-  <a class="lk tj" href="${LEAGUE_URL}" target="_blank" rel="noopener"><div class="ic"><img src="${CRAB}" alt=""></div><div class="txt"><b>Trader Jack's Pickleball League IV</b><span>Fixtures, scores and ladders</span></div><div class="go">→</div></a>
+  ${LEAGUES.map(l=>`<a class="lk tj" href="${leagueUrl(l.id)}"><div class="ic"><img src="${CRAB}" alt=""></div><div class="txt"><b>${esc(l.name)}</b><span>${esc(l.sub)}</span></div><div class="go">→</div></a>`).join('\n  ')}
   <div class="lk open soon"><div class="ic"><img src="${CIO}" alt=""></div><div class="txt"><b>Cook Islands Open</b><span>8–13 November 2027 · Rarotonga</span></div><div class="go">SOON</div></div>
   <a class="lk fb" href="${FB}" target="_blank" rel="noopener"><div class="ic">f</div><div class="txt"><b>PCI on Facebook</b><span>Event posts, photos and chat</span></div><div class="go">→</div></a>
 </div>`}
@@ -565,7 +569,7 @@ const QA=()=>[
   ['When are the drop-in sessions?',`Monday 5–7pm at TSA; Tuesday, Wednesday and Friday 11am–1pm at TSA; and Friday 5–7pm at Avatea Hall. Check the Events tab for any changes and special sessions.`],
   ['Where are the venues?','Avatea Hall is at Apii Nikao School on Tapatea Rd. The Telecom Sports Arena (TSA) is the indoor stadium nearby in Nikao. Tap Venues on the Home page for maps and directions.'],
   ['How much is a membership?','Adult $100 a year, Junior (under 16) $50, Senior (60+) $50, and Family $250 for a household of two adults and two children under 16. Visitors can also take a 10-day membership for $40. See the Join tab.'],
-  ['What is the Trader Jack’s Pickleball League?',`Our doubles league for teams of three, open to any gender, age and ability. Fixtures, scores and ladders are in the <a href="${LEAGUE_URL}" target="_blank" rel="noopener">league app</a>.`],
+  ['What is the Trader Jack’s Pickleball League?',`Our doubles league for teams of three, open to any gender, age and ability. Fixtures, scores and ladders are in the <a href="${leagueUrl()}">league app</a>.`],
   ['How do I keep up with what’s on?',`Check this app's Events and News tabs, and follow <a href="${FB}" target="_blank" rel="noopener">Pickleball Cook Islands on Facebook</a>.`]
 ];
 function viewQs(){return `<div class="qas">${QA().map(([q,a],i)=>`<details class="qa" id="qa${i}"><summary>${esc(q)}</summary><p>${a}</p></details>`).join('')}</div>`}
