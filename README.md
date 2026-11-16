@@ -5,6 +5,21 @@ https://pickleball-cook-islands.github.io/
 
 No build step: anything merged to `main` goes live within a minute or two.
 
+## Running it locally
+
+To check changes before they go live, start a local web server from the repository folder:
+
+```sh
+python3 -m http.server 8000
+```
+
+Then open http://localhost:8000/ in a browser. Press Ctrl+C in the terminal to stop the server.
+
+- Open `index.html` through the server, not by double-clicking the file. League pages load their `league.json` with `fetch`, and browsers block that for files opened directly from disk.
+- A league: http://localhost:8000/leagues/league.html?l=tjpl4
+- The new look: http://localhost:8000/?theme=day (`?theme=classic` switches back).
+- If port 8000 is already in use, pick another number, e.g. `python3 -m http.server 8080`.
+
 ## What's where
 
 | Path | What it is | Who edits it |
