@@ -382,8 +382,12 @@ html[data-theme=day] .hof-hero svg *{fill:#C9A227;stroke:#C9A227}
 .dcar-dots button::before{content:"";position:absolute;inset:-10px 0}
 .dcar-dots button.on{background:#39FF14}
 .dcar-n{font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.08em;color:#9CB893;font-variant-numeric:tabular-nums;white-space:nowrap}
-.dcar-nav .ar{width:40px;height:40px;flex:0 0 40px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:none;color:#fff;font-size:22px;line-height:1;cursor:pointer;display:grid;place-items:center}
-.dcar-nav .ar:hover{border-color:#39FF14;color:#39FF14}
+.dcar-nav .ar{width:44px;height:44px;flex:0 0 44px;padding:0;border-radius:50%;border:0;background:rgba(255,255,255,.1);color:#fff;cursor:pointer;display:grid;place-items:center;transition:background-color .15s,color .15s}
+.dcar-nav .ar svg{display:block}
+.dcar-nav .ar:hover{background:#39FF14;color:#061D01}
+.dcar-nav .ar:active{transform:scale(.94)}
+.dcar-nav .ar:focus-visible{outline:3px solid #39FF14;outline-offset:2px}
+.dcar-nav .ar+.ar{margin-left:-4px}
 .wk{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(118px,1fr);gap:8px;overflow-x:auto;scrollbar-width:none}
 .wd{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;min-height:120px}
 .wd>b{font-family:var(--display);font-weight:800;font-size:17px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
@@ -569,7 +573,7 @@ h+=`<div class="wd${i===0?' now':''}${L.some(e=>e.kind==='league')?' lg':''}"><b
 return h+'</div>'}
 function heroCarousel(){if(!HERO_PHOTOS.length)return '';const N=HERO_PHOTOS.length,pad=n=>String(n).padStart(2,'0');
 return `<div class="dcar" role="region" aria-roledescription="carousel" aria-label="Club photos"><div class="dcar-track" tabindex="0">${HERO_PHOTOS.map((p,i)=>`<img src="${p.src}" alt="${esc(p.alt)}" class="${p.fit?'fit':''}"${p.pos?` style="object-position:${p.pos}"`:''}${i?' loading="lazy"':''} aria-roledescription="slide" aria-label="${i+1} of ${N}">`).join('')}</div></div>
-<div class="dcar-nav"><div class="dcar-dots">${HERO_PHOTOS.map((_,i)=>`<button data-car="${i}" class="${i?'':'on'}" aria-label="Show photo ${i+1}"></button>`).join('')}</div><span class="dcar-n" aria-live="polite">${pad(1)} / ${pad(N)}</span><button class="ar" data-car="prev" aria-label="Previous photo">‹</button><button class="ar" data-car="next" aria-label="Next photo">›</button></div>`}
+<div class="dcar-nav"><div class="dcar-dots">${HERO_PHOTOS.map((_,i)=>`<button data-car="${i}" class="${i?'':'on'}" aria-label="Show photo ${i+1}"></button>`).join('')}</div><span class="dcar-n" aria-live="polite">${pad(1)} / ${pad(N)}</span><button class="ar" data-car="prev" aria-label="Previous photo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="ar" data-car="next" aria-label="Next photo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>`}
 let carTimer=null,carHold=false;
 function carGo(n){const t=document.querySelector('.dcar-track');if(!t)return;const N=t.children.length;n=(n+N)%N;t.scrollTo({left:n*t.clientWidth,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})}
 function carIdx(){const t=document.querySelector('.dcar-track');return t?Math.round(t.scrollLeft/t.clientWidth):0}
