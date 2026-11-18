@@ -17,7 +17,7 @@ Then open http://localhost:8000/ in a browser. Press Ctrl+C in the terminal to s
 
 - Open `index.html` through the server, not by double-clicking the file. League pages load their `league.json` with `fetch`, and browsers block that for files opened directly from disk.
 - A league: http://localhost:8000/leagues/league.html?l=tjpl4
-- The new look: http://localhost:8000/?theme=day (`?theme=classic` switches back).
+- Light mode is the default. Dark mode: http://localhost:8000/?theme=dark (`?theme=light` switches back). Visitors switch with the button in the header and the site remembers their choice.
 - If port 8000 is already in use, pick another number, e.g. `python3 -m http.server 8080`.
 
 ## What's where
