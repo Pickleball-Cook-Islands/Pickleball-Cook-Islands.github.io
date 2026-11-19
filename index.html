@@ -337,7 +337,8 @@ header .t{display:block}
 @media (min-width:900px){
   :root{--hh:61px}
   body{padding-bottom:0}
-  .tabs{top:calc(var(--hh) + env(safe-area-inset-top,0px));left:0;right:0;bottom:auto;width:auto;flex-direction:row;justify-content:center;gap:4px;border-top:0;border-bottom:1px solid var(--line);padding:0}
+  header{border-bottom:0}
+  .tabs{top:calc(var(--hh) + env(safe-area-inset-top,0px));left:0;right:0;bottom:auto;width:auto;flex-direction:row;justify-content:center;gap:4px;border-top:0;border-bottom:2px solid var(--acc);padding:0}
   .tabs button{flex:0 0 auto;padding:13px 20px;font-size:17px}
   .tabs button:hover{color:var(--fg);background:var(--bg3)}
   .tabs button.on{box-shadow:inset 0 -3px 0 var(--acc);background:none}
@@ -540,16 +541,20 @@ const BANK={bank:'Bank of the Cook Islands (BCI)',name:'Pickleball Cook Islands 
 // Homepage photo carousel (new look). Photos live in assets/img/photos/.
 // pos = which part of the photo to keep when it is cropped; fit:1 shows the whole photo (good for wide group shots).
 const HERO_PHOTOS=[
-  {src:'assets/img/photos/hero-01.jpg',alt:'Two Team Cook Islands players holding the Cook Islands flag on court'},
-  {src:'assets/img/photos/hero-02.jpg',alt:'A smiling player in a bucket hat and sunglasses holding a paddle',pos:'50% 35%'},
-  {src:'assets/img/photos/hero-03.jpg',alt:'Club members gathered in front of the PCI banner',fit:1},
-  {src:'assets/img/photos/hero-04.jpg',alt:'Team Cook Islands players in a doubles rally',pos:'50% 55%'},
-  {src:'assets/img/photos/hero-05.jpg',alt:'Three Cook Islands supporters in matching island-print outfits'},
-  {src:'assets/img/photos/hero-06.jpg',alt:'Two Team Cook Islands players tapping paddles between points'},
+  {src:'assets/img/photos/hero-15.jpg',alt:'Club members gathered in front of the PCI banner'},
+  {src:'assets/img/photos/hero-14.jpg',alt:'Cook Islands Pickleball Open champions with their medals, ei and kids holding the trophy',pos:'50% 35%'},
+  {src:'assets/img/photos/hero-12.jpg',alt:'Three junior players holding their paddles at the Trader Jacks league',pos:'50% 30%'},
+  {src:'assets/img/photos/hero-04.jpg',alt:'Team Cook Islands players ready at the net in a doubles rally',pos:'50% 55%'},
   {src:'assets/img/photos/hero-07.jpg',alt:'A Team Cook Islands player reaching for a shot at the Pickleball World Cup'},
-  {src:'assets/img/photos/hero-08.jpg',alt:'A Team Cook Islands player hitting a backhand behind a Cook Islands flag',pos:'50% 35%'},
+  {src:'assets/img/photos/hero-10.jpg',alt:'A Team Cook Islands player lunging for a low ball at the net'},
+  {src:'assets/img/photos/hero-16.jpg',alt:'Players in pink at the net behind a Cook Islands Breast Cancer Foundation banner',pos:'50% 70%'},
+  {src:'assets/img/photos/hero-13.jpg',alt:'Social players at the net showing off their prize socks',pos:'50% 30%'},
+  {src:'assets/img/photos/hero-11.jpg',alt:'Two junior medal winners in flower ei with PCI coaches giving a thumbs up',pos:'50% 30%'},
   {src:'assets/img/photos/hero-09.jpg',alt:'A Team Cook Islands doubles pair ready at the net'},
-  {src:'assets/img/photos/hero-10.jpg',alt:'A Team Cook Islands player stretching for a volley at the net'},
+  {src:'assets/img/photos/hero-08.jpg',alt:'A Team Cook Islands player hitting a backhand behind a Cook Islands flag',pos:'50% 35%'},
+  {src:'assets/img/photos/hero-06.jpg',alt:'Team Cook Islands doubles partners tapping paddles between points'},
+  {src:'assets/img/photos/hero-05.jpg',alt:'Three Cook Islands supporters in matching island-print outfits and flower crowns',pos:'50% 20%'},
+  {src:'assets/img/photos/hero-02.jpg',alt:'A smiling player in a bucket hat and sunglasses holding a paddle',pos:'50% 35%'},
 ];
 /* ===== END CONTENT ===== */
 
@@ -593,7 +598,10 @@ function linkCards(){return `<div class="links">
 let mode=document.documentElement.dataset.mode==='dark'?'dark':'light';
 function applyTheme(){document.documentElement.dataset.mode=mode;const dark=mode==='dark';
 const b=document.getElementById('themebtn');if(b){b.textContent=dark?'Light mode':'Dark mode';b.setAttribute('aria-pressed',String(dark))}
-const m=document.querySelector('meta[name=theme-color]');if(m)m.content=dark?'#0B2906':'#FFFFFF'}
+const m=document.querySelector('meta[name=theme-color]');if(m)m.content=dark?'#0B2906':'#FFFFFF';syncHH()}
+/* keep the tab bar flush under the header, whatever height it renders at */
+function syncHH(){const h=document.querySelector('header');if(h)document.documentElement.style.setProperty('--hh',h.offsetHeight+'px')}
+window.addEventListener('resize',syncHH);if(document.fonts)document.fonts.ready.then(syncHH);
 function weekStrip(){const ev=allEvents(),now=new Date(new Date().toLocaleString('en-US',{timeZone:'Pacific/Rarotonga'})),nm=now.getHours()*60+now.getMinutes();let h='<div class="wk">';
 for(let i=0;i<7;i++){const d=new Date(today);d.setDate(d.getDate()+i);const L=ev.filter(e=>e.date===iso(d));
 h+=`<div class="wd${i===0?' now':''}${L.some(e=>e.kind==='league')?' lg':''}"><b>${i===0?'Today':DAY[d.getDay()]+' '+d.getDate()}</b>${L.length?L.map(e=>`<span class="ws ${e.kind}${i===0&&evSpan(e)[1]<=nm?' done':''}"><i>${esc(e.time||(e.kind==='league'?'From 1pm':''))}</i>${esc(e.kind==='dropin'?'Drop-in':e.title)}${e.place?' · '+esc(e.place):''}</span>`).join(''):'<em>No sessions</em>'}</div>`}
