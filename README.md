@@ -25,7 +25,8 @@ Then open http://localhost:8000/ in a browser. Press Ctrl+C in the terminal to s
 | Path | What it is | Who edits it |
 |---|---|---|
 | `index.html` | The club site: page, styles and script | Edit the content block at the top of the script (between `EDIT CONTENT HERE` and `END CONTENT`) for events, news, fees, venues, the list of leagues and the homepage photo carousel (`HERO_PHOTOS`) |
-| `assets/img/` | Logo and artwork, `photos/` albums, `hof/` Hall of Fame photos | Rarely |
+| `assets/img/` | Logo and artwork, `hof/` Hall of Fame photos | Rarely |
+| `assets/img/photos/` | `hero/`: homepage carousel (`hero/spare/` holds unused ones to swap in); one folder per album (`club-days/`, `world-cup-2026/`) | When adding photos |
 | `leagues/league.html` | The league page shared by every league: layout, styling and logic | Rarely, only to change how leagues work |
 | `leagues/<id>/league.json` | One league's teams, players, fixtures, scores, news, subs, colours and finals details | Admins, after every round |
 | `leagues/<id>/images/` | That league's logos | Rarely |

@@ -510,9 +510,11 @@ const NEWS=[
 
 // Photos: add {src, caption} once albums are ready
 const PHOTOS=[];
-// Photo albums. img arrays come from PWC_IMG.
-const PWC_IMG={"group": ["assets/img/photos/pwc-group-01.jpg", "assets/img/photos/pwc-group-02.jpg", "assets/img/photos/pwc-group-03.jpg", "assets/img/photos/pwc-group-04.jpg", "assets/img/photos/pwc-group-05.jpg"], "intl": ["assets/img/photos/pwc-intl-01.jpg", "assets/img/photos/pwc-intl-02.jpg", "assets/img/photos/pwc-intl-03.jpg", "assets/img/photos/pwc-intl-04.jpg", "assets/img/photos/pwc-intl-05.jpg", "assets/img/photos/pwc-intl-06.jpg", "assets/img/photos/pwc-intl-07.jpg", "assets/img/photos/pwc-intl-08.jpg", "assets/img/photos/pwc-intl-09.jpg", "assets/img/photos/pwc-intl-10.jpg", "assets/img/photos/pwc-intl-11.jpg", "assets/img/photos/pwc-intl-12.jpg", "assets/img/photos/pwc-intl-13.jpg", "assets/img/photos/pwc-intl-14.jpg"], "wc": ["assets/img/photos/pwc-wc-01.jpg", "assets/img/photos/pwc-wc-02.jpg", "assets/img/photos/pwc-wc-03.jpg", "assets/img/photos/pwc-wc-04.jpg", "assets/img/photos/pwc-wc-05.jpg", "assets/img/photos/pwc-wc-06.jpg", "assets/img/photos/pwc-wc-07.jpg", "assets/img/photos/pwc-wc-08.jpg", "assets/img/photos/pwc-wc-09.jpg", "assets/img/photos/pwc-wc-10.jpg", "assets/img/photos/pwc-wc-11.jpg", "assets/img/photos/pwc-wc-12.jpg", "assets/img/photos/pwc-wc-13.jpg", "assets/img/photos/pwc-wc-14.jpg", "assets/img/photos/pwc-wc-15.jpg", "assets/img/photos/pwc-wc-16.jpg", "assets/img/photos/pwc-wc-17.jpg", "assets/img/photos/pwc-wc-18.jpg"]};
+// Photo albums. img arrays come from ALBUM_IMG.
+const ALBUM_IMG={"club-action": ["assets/img/photos/club-days/club-action-01.jpg", "assets/img/photos/club-days/club-action-02.jpg", "assets/img/photos/club-days/club-action-03.jpg", "assets/img/photos/club-days/club-action-04.jpg", "assets/img/photos/club-days/club-action-05.jpg"], "club-groups": ["assets/img/photos/club-days/club-groups-01.jpg", "assets/img/photos/club-days/club-groups-02.jpg", "assets/img/photos/club-days/club-groups-03.jpg", "assets/img/photos/club-days/club-groups-04.jpg"], "club-teams": ["assets/img/photos/club-days/club-teams-01.jpg", "assets/img/photos/club-days/club-teams-02.jpg", "assets/img/photos/club-days/club-teams-03.jpg", "assets/img/photos/club-days/club-teams-04.jpg", "assets/img/photos/club-days/club-teams-05.jpg", "assets/img/photos/club-days/club-teams-06.jpg"], "club-pairs": ["assets/img/photos/club-days/club-pairs-01.jpg", "assets/img/photos/club-days/club-pairs-02.jpg", "assets/img/photos/club-days/club-pairs-03.jpg", "assets/img/photos/club-days/club-pairs-04.jpg", "assets/img/photos/club-days/club-pairs-05.jpg", "assets/img/photos/club-days/club-pairs-06.jpg", "assets/img/photos/club-days/club-pairs-07.jpg", "assets/img/photos/club-days/club-pairs-08.jpg", "assets/img/photos/club-days/club-pairs-09.jpg", "assets/img/photos/club-days/club-pairs-10.jpg"], "group": ["assets/img/photos/world-cup-2026/pwc-group-01.jpg", "assets/img/photos/world-cup-2026/pwc-group-02.jpg", "assets/img/photos/world-cup-2026/pwc-group-03.jpg", "assets/img/photos/world-cup-2026/pwc-group-04.jpg", "assets/img/photos/world-cup-2026/pwc-group-05.jpg"], "intl": ["assets/img/photos/world-cup-2026/pwc-intl-01.jpg", "assets/img/photos/world-cup-2026/pwc-intl-02.jpg", "assets/img/photos/world-cup-2026/pwc-intl-03.jpg", "assets/img/photos/world-cup-2026/pwc-intl-04.jpg", "assets/img/photos/world-cup-2026/pwc-intl-05.jpg", "assets/img/photos/world-cup-2026/pwc-intl-06.jpg", "assets/img/photos/world-cup-2026/pwc-intl-07.jpg", "assets/img/photos/world-cup-2026/pwc-intl-08.jpg", "assets/img/photos/world-cup-2026/pwc-intl-09.jpg", "assets/img/photos/world-cup-2026/pwc-intl-10.jpg", "assets/img/photos/world-cup-2026/pwc-intl-11.jpg", "assets/img/photos/world-cup-2026/pwc-intl-12.jpg", "assets/img/photos/world-cup-2026/pwc-intl-13.jpg", "assets/img/photos/world-cup-2026/pwc-intl-14.jpg"], "wc": ["assets/img/photos/world-cup-2026/pwc-wc-01.jpg", "assets/img/photos/world-cup-2026/pwc-wc-02.jpg", "assets/img/photos/world-cup-2026/pwc-wc-03.jpg", "assets/img/photos/world-cup-2026/pwc-wc-04.jpg", "assets/img/photos/world-cup-2026/pwc-wc-05.jpg", "assets/img/photos/world-cup-2026/pwc-wc-06.jpg", "assets/img/photos/world-cup-2026/pwc-wc-07.jpg", "assets/img/photos/world-cup-2026/pwc-wc-08.jpg", "assets/img/photos/world-cup-2026/pwc-wc-09.jpg", "assets/img/photos/world-cup-2026/pwc-wc-10.jpg", "assets/img/photos/world-cup-2026/pwc-wc-11.jpg", "assets/img/photos/world-cup-2026/pwc-wc-12.jpg", "assets/img/photos/world-cup-2026/pwc-wc-13.jpg", "assets/img/photos/world-cup-2026/pwc-wc-14.jpg", "assets/img/photos/world-cup-2026/pwc-wc-15.jpg", "assets/img/photos/world-cup-2026/pwc-wc-16.jpg", "assets/img/photos/world-cup-2026/pwc-wc-17.jpg", "assets/img/photos/world-cup-2026/pwc-wc-18.jpg"]};
 const ALBUMS=[
+  {title:'Club Days',sub:'Drop-ins, league and Pickle in Pink · Rarotonga',sections:[
+    {name:'In Play',key:'club-action'},{name:'Groups & Events',key:'club-groups'},{name:'Teams',key:'club-teams'},{name:'Partners',key:'club-pairs'}]},
   {title:'Heineken Pickleball World Cup 2026',sub:'Vietnam · August–September 2026',sections:[
     {name:'Group Photos',key:'group'},{name:'International Tournament',key:'intl'},{name:'Heineken World Cup',key:'wc'}]}
 ];
@@ -538,23 +540,19 @@ const FEES=[
 ];
 const JOIN_FORM_URL='https://docs.google.com/forms/d/e/1FAIpQLSc--ga6qD-FWRCZrpJ6H0DoBfKnigHOiAT20O1CAtAerZUrYA/viewform';
 const BANK={bank:'Bank of the Cook Islands (BCI)',name:'Pickleball Cook Islands Inc',acct:'92700S15'};
-// Homepage photo carousel (new look). Photos live in assets/img/photos/.
+// Homepage photo carousel (new look). Photos live in assets/img/photos/hero/ (spare ones in hero/spare/).
 // pos = which part of the photo to keep when it is cropped; fit:1 shows the whole photo (good for wide group shots).
 const HERO_PHOTOS=[
-  {src:'assets/img/photos/hero-15.jpg',alt:'Club members gathered in front of the PCI banner'},
-  {src:'assets/img/photos/hero-14.jpg',alt:'Cook Islands Pickleball Open champions with their medals, ei and kids holding the trophy',pos:'50% 35%'},
-  {src:'assets/img/photos/hero-12.jpg',alt:'Three junior players holding their paddles at the Trader Jacks league',pos:'50% 30%'},
-  {src:'assets/img/photos/hero-04.jpg',alt:'Team Cook Islands players ready at the net in a doubles rally',pos:'50% 55%'},
-  {src:'assets/img/photos/hero-07.jpg',alt:'A Team Cook Islands player reaching for a shot at the Pickleball World Cup'},
-  {src:'assets/img/photos/hero-10.jpg',alt:'A Team Cook Islands player lunging for a low ball at the net'},
-  {src:'assets/img/photos/hero-16.jpg',alt:'Players in pink at the net behind a Cook Islands Breast Cancer Foundation banner',pos:'50% 70%'},
-  {src:'assets/img/photos/hero-13.jpg',alt:'Social players at the net showing off their prize socks',pos:'50% 30%'},
-  {src:'assets/img/photos/hero-11.jpg',alt:'Two junior medal winners in flower ei with PCI coaches giving a thumbs up',pos:'50% 30%'},
-  {src:'assets/img/photos/hero-09.jpg',alt:'A Team Cook Islands doubles pair ready at the net'},
-  {src:'assets/img/photos/hero-08.jpg',alt:'A Team Cook Islands player hitting a backhand behind a Cook Islands flag',pos:'50% 35%'},
-  {src:'assets/img/photos/hero-06.jpg',alt:'Team Cook Islands doubles partners tapping paddles between points'},
-  {src:'assets/img/photos/hero-05.jpg',alt:'Three Cook Islands supporters in matching island-print outfits and flower crowns',pos:'50% 20%'},
-  {src:'assets/img/photos/hero-02.jpg',alt:'A smiling player in a bucket hat and sunglasses holding a paddle',pos:'50% 35%'},
+  {src:'assets/img/photos/hero/hero-15.jpg',alt:'Club members gathered in front of the PCI banner'},
+  {src:'assets/img/photos/hero/hero-17.jpg',alt:'Two players in visors and shutter-shade sunglasses posing arm in arm at Avatea Hall'},
+  {src:'assets/img/photos/hero/hero-10.jpg',alt:'A Team Cook Islands player lunging for a low ball at the net'},
+  {src:'assets/img/photos/hero/hero-12.jpg',alt:'Three junior players holding their paddles at the Trader Jacks league',pos:'50% 30%'},
+  {src:'assets/img/photos/hero/hero-18.jpg',alt:'Four champions in flower ei holding their trophy and prizes at the Telecom Sports Arena',pos:'50% 30%'},
+  {src:'assets/img/photos/hero/hero-07.jpg',alt:'A Team Cook Islands player reaching for a shot at the Pickleball World Cup'},
+  {src:'assets/img/photos/hero/hero-19.jpg',alt:'Four players of all ages smiling with their paddles at Avatea Hall'},
+  {src:'assets/img/photos/hero/hero-16.jpg',alt:'Players in pink at the net behind a Cook Islands Breast Cancer Foundation banner',pos:'50% 70%'},
+  {src:'assets/img/photos/hero/hero-09.jpg',alt:'A Team Cook Islands doubles pair ready at the net'},
+  {src:'assets/img/photos/hero/hero-05.jpg',alt:'Three Cook Islands supporters in matching island-print outfits and flower crowns',pos:'50% 20%'},
 ];
 /* ===== END CONTENT ===== */
 
@@ -659,13 +657,13 @@ function viewPhotos(){
   let h=`<h2>Photos</h2>`;
   for(const a of ALBUMS){
     h+=`<section class="album"><div class="album-h"><b>${esc(a.title)}</b><span>${esc(a.sub)}</span></div>`;
-    for(const sec of a.sections){const L=PWC_IMG[sec.key]||[];
+    for(const sec of a.sections){const L=ALBUM_IMG[sec.key]||[];
       h+=`<div class="lbl">${esc(sec.name)} · ${L.length}</div><div class="ph-grid">${L.map((src,n)=>`<button class="ph" data-ph="${sec.key}:${n}" aria-label="Open photo"><img src="${src}" alt="" loading="lazy"></button>`).join('')}</div>`}
     h+=`</section>`}
   h+=`<p class="note">More photos from club days and the league are on the <a href="${FB}" target="_blank" rel="noopener" style="color:var(--acc)">PCI Facebook page</a>.</p>`;
   return h}
 function openPhoto(key,n){
-  const L=PWC_IMG[key];if(!L)return;n=(n+L.length)%L.length;
+  const L=ALBUM_IMG[key];if(!L)return;n=(n+L.length)%L.length;
   let v=document.getElementById('lb');if(!v){v=document.createElement('div');v.id='lb';document.body.appendChild(v)}
   v.innerHTML=`<button class="lb-x" data-lbx aria-label="Close">✕</button><button class="lb-p" data-lbgo="${key}:${n-1}" aria-label="Previous">‹</button><img src="${L[n]}" alt=""><button class="lb-n" data-lbgo="${key}:${n+1}" aria-label="Next">›</button><div class="lb-c">${n+1} / ${L.length}</div>`;
   v.hidden=false}
