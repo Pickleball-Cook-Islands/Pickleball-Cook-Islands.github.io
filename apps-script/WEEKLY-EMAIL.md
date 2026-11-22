@@ -1,7 +1,7 @@
 # Week ahead email
 
 Visitors sign up on a Google Form and confirm by email. Every Sunday at about 7am Rarotonga time, they get an email
-listing the week's sessions and events (Sunday to Saturday), plus league days and events coming up in the next 4 weeks.
+listing the coming week's sessions and events (Monday to Saturday), plus league days and events coming up in the next 4 weeks.
 The events come from the same calendar feed as the website ([events-feed.gs](events-feed.gs)), so the email always
 matches the site. The email is sent from the Gmail account that owns the script.
 
