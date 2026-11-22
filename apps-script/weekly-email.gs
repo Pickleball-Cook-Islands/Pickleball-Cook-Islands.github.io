@@ -220,15 +220,14 @@ function previewWeek() {
 
 function sendWeekTo_(week, email, name, token) {
   const unsub = token ? webAppUrl_() + '?a=unsub&t=' + token : '';
-  const hi = `Kia orana${name ? ' ' + esc_(name) : ''}, here's what's on this week.`;
   const foot = 'Times are Rarotonga time. ' + (unsub
-    ? `You're getting this because you subscribed on the ${CLUB} website.<br><a href="${unsub}" style="color:${P.mute};text-decoration:underline">Unsubscribe</a>`
+    ? `You subscribed on the ${CLUB} website. <a href="${unsub}" style="color:${P.mute};text-decoration:underline">Unsubscribe</a>`
     : 'Test email: subscribers get an unsubscribe link here.');
   MailApp.sendEmail({
     to: email, name: CLUB, subject: week.subject,
     body: (name ? `Kia orana ${name},` : 'Kia orana,') + '\n\n' + week.text + '\n\nWebsite: ' + SITE_URL + (unsub ? '\nUnsubscribe: ' + unsub : ''),
     htmlBody: shell_({ title: 'The week ahead', sub: week.range, preheader: week.preheader,
-      inner: `<p style="margin:0 0 6px;font-size:16px;color:${P.fg}">${hi}</p>${week.html}`, foot })
+      hi: `Kia orana${name ? ' ' + esc_(name) : ''}!`, inner: week.html, foot })
   });
 }
 
@@ -248,65 +247,66 @@ function buildWeek_(from) {
   const range = `${short(days[0])} – ${short(days[6])}`;
   const subject = `PCI this week: ${range}`;
 
-  let html = '';
+  // One table for the whole week: a date block per day, one row per event.
+  let rows = '', first = true;
   let text = `What's on at ${CLUB}, ${range}. Times are Rarotonga time.\n`;
-  if (!inWeek.length) {
-    html += card_(P.mute, `<div style="${H}font-size:22px;color:${P.fg}">No sessions this week</div>
-      <div style="margin-top:4px;color:${P.mute};font-size:15px">Keep an eye on the website and Facebook for updates.</div>`);
-    text += '\nNo sessions are scheduled this week.\n';
-  }
   days.forEach(d => {
     const L = inWeek.filter(e => e.date === d);
     if (!L.length) return;
-    html += dayHead_(label(d));
     text += `\n${label(d).toUpperCase()}\n`;
-    L.forEach(e => { html += eventHtml_(e); text += eventText_(e); });
+    L.forEach((e, i) => {
+      const top = i === 0 && !first ? `border-top:1px solid ${P.line};` : '';
+      const date = i === 0 ? `<td rowspan="${L.length}" width="52" valign="top" style="${top}padding:10px 0 10px 12px">
+          <div style="${H}font-size:12px;letter-spacing:.12em;color:${P.mute};line-height:1">${fmt_(dateOf_(d), 'EEE')}</div>
+          <div style="${H}font-size:26px;color:${P.fg};line-height:1">${fmt_(dateOf_(d), 'd')}</div></td>` : '';
+      rows += `<tr>${date}${eventCells_(e, top + (i ? `border-top:1px dashed ${P.line};` : ''))}</tr>`;
+      text += eventText_(e);
+    });
+    first = false;
   });
+
+  let html = inWeek.length
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${P.card};border-radius:12px;border-collapse:separate">${rows}</table>`
+    : `<div style="background:${P.card};border-radius:12px;padding:16px;${H}font-size:18px;color:${P.fg}">No sessions this week
+        <div style="font-family:${BODY};font-weight:400;text-transform:none;font-size:14px;color:${P.mute};margin-top:2px">Keep an eye on the website and Facebook for updates.</div></div>`;
+  if (!inWeek.length) text += '\nNo sessions are scheduled this week.\n';
+
   if (later.length) {
-    html += dayHead_('Coming up');
-    html += `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${P.card};border-radius:12px">` +
-      later.map((e, i) => `<tr><td style="padding:12px 16px;${i ? `border-top:1px solid ${P.line};` : ''}">
-        <span style="${H}font-size:15px;letter-spacing:.06em;color:${COLOR[e.kind] || P.acc}">${esc_(short(e.date))}</span>
-        <span style="color:${P.fg};font-size:15px">&nbsp;·&nbsp;${esc_(e.title)}</span>${e.place ? `<span style="color:${P.mute};font-size:14px">&nbsp;·&nbsp;${esc_(place_(e.place))}</span>` : ''}</td></tr>`).join('') +
-      '</table>';
+    html += `<div style="${H}font-size:13px;letter-spacing:.16em;color:${P.mute};margin:16px 0 6px">Coming up</div>` +
+      later.map(e => `<div style="font-size:14px;line-height:1.5;color:${P.fg}">
+        <span style="${H}font-size:14px;letter-spacing:.05em;color:${COLOR[e.kind] || P.acc}">${esc_(short(e.date))}</span>
+        &nbsp;${esc_(e.title)}${e.place ? `<span style="color:${P.mute}"> · ${esc_(place_(e.place))}</span>` : ''}</div>`).join('');
     text += '\nCOMING UP\n';
     later.forEach(e => { text += `${short(e.date)} · ${e.title}${e.place ? ' · ' + place_(e.place) : ''}\n`; });
   }
-  html += `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px auto 4px"><tr><td style="border-radius:10px;background:${P.acc}">
-    <a href="${SITE_URL}#cal" style="display:inline-block;padding:13px 26px;${H}font-size:18px;letter-spacing:.06em;color:${P.ink};text-decoration:none">See the full calendar</a></td></tr></table>`;
 
-  const first = inWeek.find(e => e.kind !== 'dropin') || inWeek[0];
+  const kinds = Object.keys(COLOR).filter(k => inWeek.some(e => e.kind === k));
+  const key = kinds.length > 1 ? kinds.map(k => `<span style="white-space:nowrap"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${COLOR[k]}"></span>&nbsp;${esc_(KIND[k])}</span>`).join('&nbsp;&nbsp;&nbsp;') : '';
+  html += `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px"><tr>
+    <td style="font-size:12px;color:${P.mute}">${key}</td>
+    <td align="right" style="white-space:nowrap"><a href="${SITE_URL}#cal" style="display:inline-block;background:${P.acc};border-radius:8px;padding:8px 14px;${H}font-size:15px;letter-spacing:.05em;color:${P.ink};text-decoration:none">Full calendar</a></td></tr></table>`;
+
+  const lead = inWeek.find(e => e.kind !== 'dropin') || inWeek[0];
   const preheader = !inWeek.length ? 'No sessions scheduled this week.'
     : `${inWeek.length} session${inWeek.length > 1 ? 's' : ''} this week` +
-      (first ? ` · ${fmt_(dateOf_(first.date), 'EEE')}: ${first.title}` : '');
+      (lead ? ` · ${fmt_(dateOf_(lead.date), 'EEE')}: ${lead.title}` : '');
   return { key: 'week of ' + day0, subject, range, preheader, html, text }; // text key, so Sheets doesn't turn it into a date
 }
 
-function dayHead_(t) {
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:26px 0 10px"><tr>
-    <td style="${H}font-size:15px;letter-spacing:.16em;color:${P.mute};white-space:nowrap;padding-right:12px">${esc_(t)}</td>
-    <td width="100%" style="border-bottom:1px solid ${P.line};font-size:0;line-height:0">&nbsp;</td></tr></table>`;
-}
-
-function card_(color, inner) {
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 10px;background:${P.card};border-radius:12px;border-collapse:separate">
-    <tr><td width="6" style="background:${color};border-radius:12px 0 0 12px;font-size:0;line-height:0">&nbsp;</td>
-    <td style="padding:14px 16px 15px">${inner}</td></tr></table>`;
-}
-
-function eventHtml_(e) {
+/** One event as two table cells: a colour bar, then time · venue over the title. */
+function eventCells_(e, border) {
   const c = COLOR[e.kind] || P.acc;
-  const pill = (t, bg, fg) => `<span style="display:inline-block;${H}font-size:12px;letter-spacing:.12em;padding:3px 8px;border-radius:4px;background:${bg};color:${fg}">${esc_(t)}</span>`;
-  const tags = pill(KIND[e.kind] || 'Event', c, e.kind === 'special' || e.kind === 'tourn' ? '#FFFFFF' : P.ink) +
-    (e.moved ? '&nbsp;' + pill('Venue change', '#FFFFFF', P.ink) : '');
-  const crab = e.kind === 'league' ? `<img src="${SITE_URL}assets/img/crab.png" width="22" height="19" alt="" style="vertical-align:-2px;margin-right:6px;border:0">` : '';
-  const when = [e.time, e.place ? place_(e.place) : ''].filter(Boolean).map(esc_).join('&nbsp;&nbsp;·&nbsp;&nbsp;');
-  const divs = e.divs ? `<div style="margin-top:10px">${e.divs.map(d =>
-    pill(d[1], DIV[d[0]] || c, P.ink)).join('&nbsp;')}</div>` : '';
-  const note = e.note ? `<div style="margin-top:8px;color:${P.mute};font-size:14px;line-height:1.45">${esc_(e.note)}</div>` : '';
-  return card_(c, `<div>${tags}</div>
-    <div style="${H}margin-top:8px;font-size:22px;line-height:1.1;color:${P.fg}">${crab}${esc_(e.title)}</div>
-    ${when ? `<div style="${H}margin-top:5px;font-size:17px;letter-spacing:.03em;color:${c}">${when}</div>` : ''}${divs}${note}`);
+  const pill = (t, bg) => `<span style="display:inline-block;${H}font-size:11px;letter-spacing:.06em;padding:1px 6px;border-radius:3px;background:${bg};color:${P.ink};vertical-align:1px">${esc_(t)}</span>`;
+  const crab = e.kind === 'league' ? `<img src="${SITE_URL}assets/img/crab.png" width="16" height="14" alt="" style="vertical-align:-1px;margin-right:4px;border:0">` : '';
+  const when = [e.time, e.place ? place_(e.place) : ''].filter(Boolean).map(esc_).join(' · ');
+  const extras = (e.moved ? ' ' + pill('Venue change', '#FFFFFF') : '') +
+    (e.divs ? ' ' + e.divs.map(d => pill(d[1], DIV[d[0]] || c)).join(' ') : '');
+  const note = e.note && e.kind !== 'dropin'
+    ? `<div style="font-size:13px;line-height:1.35;color:${P.mute};margin-top:2px">${esc_(e.note.length > 110 ? e.note.slice(0, 107).trim() + '…' : e.note)}</div>` : '';
+  return `<td width="12" style="${border}padding:10px 0 10px 8px"><div style="width:4px;height:34px;border-radius:2px;background:${c}"></div></td>
+    <td style="${border}padding:9px 12px 9px 6px">
+      <div style="${H}font-size:14px;letter-spacing:.03em;color:${c};line-height:1.2">${when}</div>
+      <div style="${H}font-size:18px;color:${P.fg};line-height:1.2">${crab}${esc_(e.title)}${extras}</div>${note}</td>`;
 }
 
 function eventText_(e) {
@@ -337,34 +337,35 @@ function webAppUrl_() {
 }
 
 /**
- * The branded email frame: dark PCI green, logo, big condensed title. Built from
- * tables with inline styles so it holds together in Gmail, Outlook and Apple Mail.
- * Barlow Condensed loads where the email app allows web fonts (Apple Mail, iOS);
- * elsewhere it falls back to Arial Narrow / Arial.
+ * The branded email frame: dark PCI green, logo beside a condensed title, built
+ * compact so a normal week fits on one phone screen. Tables and inline styles so it
+ * holds together in Gmail, Outlook and Apple Mail. Barlow Condensed loads where the
+ * email app allows web fonts (Apple Mail, iOS); elsewhere it falls back to Arial Narrow / Arial.
  */
 function shell_(o) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><meta name="supported-color-schemes" content="dark">
 <title>${esc_(o.title || CLUB)}</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
-<style>@media (max-width:620px){.px{padding-left:16px!important;padding-right:16px!important}.ttl{font-size:40px!important}}</style></head>
+<style>@media (max-width:620px){.px{padding-left:12px!important;padding-right:12px!important}}</style></head>
 <body style="margin:0;padding:0;background:${P.bg}">
 ${o.preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${P.bg}">${esc_(o.preheader)}&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>` : ''}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${P.bg}"><tr><td align="center" style="padding:24px 0">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${P.bg}"><tr><td align="center" style="padding:14px 0">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;font-family:${BODY};color:${P.fg}">
-  <tr><td class="px" style="padding:8px 28px 0">
-    <a href="${SITE_URL}"><img src="${SITE_URL}assets/img/logo.png" width="130" height="52" alt="${CLUB}" style="display:block;border:0;color:${P.acc};${H}font-size:20px"></a>
+  <tr><td class="px" style="padding:0 20px 12px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td valign="middle" style="border-bottom:3px solid ${P.acc};padding-bottom:10px">
+        <div style="${H}font-size:30px;line-height:1;color:${P.fg}">${esc_(o.title || CLUB)}</div>
+        ${o.sub ? `<div style="${H}margin-top:3px;font-size:15px;letter-spacing:.1em;color:${P.acc}">${esc_(o.sub)}</div>` : ''}
+      </td>
+      <td valign="middle" align="right" width="96" style="border-bottom:3px solid ${P.acc};padding-bottom:10px">
+        <a href="${SITE_URL}"><img src="${SITE_URL}assets/img/logo.png" width="90" height="36" alt="PCI" style="display:block;border:0;color:${P.acc};${H}font-size:18px"></a></td>
+    </tr></table>
+    ${o.hi ? `<div style="margin-top:10px;font-size:14px;color:${P.mute}">${o.hi}</div>` : ''}
   </td></tr>
-  <tr><td class="px" style="padding:22px 28px 0">
-    <div class="ttl" style="${H}font-size:52px;line-height:.95;letter-spacing:.01em;color:${P.fg}">${esc_(o.title || CLUB)}</div>
-    ${o.sub ? `<div style="${H}margin-top:8px;font-size:20px;letter-spacing:.1em;color:${P.acc}">${esc_(o.sub)}</div>` : ''}
-    <div style="margin-top:18px;height:4px;width:64px;background:${P.acc};font-size:0;line-height:0">&nbsp;</div>
-  </td></tr>
-  <tr><td class="px" style="padding:20px 28px 8px;font-size:16px;line-height:1.5">${o.inner}</td></tr>
-  <tr><td class="px" style="padding:24px 28px 8px;font-size:13px;line-height:1.6;color:${P.mute};text-align:center;border-top:1px solid ${P.line}">
-    <a href="${SITE_URL}" style="color:${P.acc};text-decoration:none;${H}font-size:15px;letter-spacing:.08em">Website</a>
-    &nbsp;&nbsp;·&nbsp;&nbsp;<a href="${FB_URL}" style="color:${P.acc};text-decoration:none;${H}font-size:15px;letter-spacing:.08em">Facebook</a>
-    ${o.foot ? `<div style="margin-top:10px">${o.foot}</div>` : ''}
+  <tr><td class="px" style="padding:0 20px 4px;font-size:15px;line-height:1.5">${o.inner}</td></tr>
+  <tr><td class="px" style="padding:12px 20px 4px;font-size:12px;line-height:1.5;color:${P.mute};text-align:center">
+    <a href="${SITE_URL}" style="color:${P.acc};text-decoration:none">Website</a> · <a href="${FB_URL}" style="color:${P.acc};text-decoration:none">Facebook</a>${o.foot ? `<br>${o.foot}` : ''}
   </td></tr>
 </table></td></tr></table></body></html>`;
 }
