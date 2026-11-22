@@ -272,15 +272,15 @@ function buildWeek_(from) {
   });
 
   let html = inWeek.length
-    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${P.card};border:1px solid ${P.line};border-radius:12px;border-collapse:separate">${rows}</table>`
-    : `<div style="background:${P.card};border:1px solid ${P.line};border-radius:12px;padding:16px;${H}font-size:18px;color:${P.fg}">No sessions this week
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${P.card};border-radius:12px;border-collapse:separate">${rows}</table>`
+    : `<div style="background:${P.card};border-radius:12px;padding:16px;${H}font-size:18px;color:${P.fg}">No sessions this week
         <div style="font-family:${BODY};font-weight:400;text-transform:none;font-size:14px;color:${P.mute};margin-top:2px">Keep an eye on the website and Facebook for updates.</div></div>`;
   if (!inWeek.length) text += '\nNo sessions are scheduled this week.\n';
 
   if (later.length) {
     html += `<div style="${H}font-size:13px;letter-spacing:.16em;color:${P.mute};margin:16px 0 6px">Coming up</div>` +
       later.map(e => `<div style="font-size:14px;line-height:1.5;color:${P.fg}">
-        <span style="${H}font-size:14px;letter-spacing:.05em;color:${TEXT[e.kind] || P.fg}">${esc_(short(e.date))}</span>
+        <span style="${H}font-size:14px;letter-spacing:.05em;color:${COLOR[e.kind] || P.acc}">${esc_(short(e.date))}</span>
         &nbsp;${esc_(e.title)}${e.place ? `<span style="color:${P.mute}"> · ${esc_(place_(e.place))}</span>` : ''}</div>`).join('');
     text += '\nCOMING UP\n';
     later.forEach(e => { text += `${short(e.date)} · ${e.title}${e.place ? ' · ' + place_(e.place) : ''}\n`; });
@@ -305,13 +305,13 @@ function eventCells_(e, border) {
   const pill = (t, bg) => `<span style="display:inline-block;${H}font-size:11px;letter-spacing:.06em;padding:1px 6px;border-radius:3px;background:${bg};color:${P.dark};vertical-align:1px">${esc_(t)}</span>`;
   const crab = e.kind === 'league' ? `<img src="${SITE_URL}assets/img/crab.png" width="16" height="14" alt="" style="vertical-align:-1px;margin-right:4px;border:0">` : '';
   const when = [e.time, e.place ? place_(e.place) : ''].filter(Boolean).map(esc_).join(' · ');
-  const extras = (e.moved ? ' ' + pill('Venue change', '#FFD84D') : '') +
+  const extras = (e.moved ? ' ' + pill('Venue change', '#FFFFFF') : '') +
     (e.divs ? ' ' + e.divs.map(d => pill(d[1], DIV[d[0]] || c)).join(' ') : '');
   const note = e.note && e.kind !== 'dropin'
     ? `<div style="font-size:13px;line-height:1.35;color:${P.mute};margin-top:2px">${esc_(e.note.length > 110 ? e.note.slice(0, 107).trim() + '…' : e.note)}</div>` : '';
   return `<td width="12" style="${border}padding:10px 0 10px 8px"><div style="width:4px;height:34px;border-radius:2px;background:${c}"></div></td>
     <td style="${border}padding:9px 12px 9px 6px">
-      <div style="${H}font-size:14px;letter-spacing:.03em;color:${TEXT[e.kind] || P.fg};line-height:1.2">${when}</div>
+      <div style="${H}font-size:14px;letter-spacing:.03em;color:${c};line-height:1.2">${when}</div>
       <div style="${H}font-size:18px;color:${P.fg};line-height:1.2">${crab}${esc_(e.title)}${extras}</div>${note}</td>`;
 }
 
@@ -350,7 +350,7 @@ function webAppUrl_() {
  */
 function shell_(o) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><meta name="supported-color-schemes" content="dark">
 <title>${esc_(o.title || CLUB)}</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
 <style>@media (max-width:620px){.px{padding-left:12px!important;padding-right:12px!important}}</style></head>
@@ -362,10 +362,10 @@ ${o.preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
       <td valign="middle" style="border-bottom:3px solid ${P.acc};padding-bottom:10px">
         <div style="${H}font-size:30px;line-height:1;color:${P.fg}">${esc_(o.title || CLUB)}</div>
-        ${o.sub ? `<div style="${H}margin-top:3px;font-size:15px;letter-spacing:.1em;color:${TEXT.dropin}">${esc_(o.sub)}</div>` : ''}
+        ${o.sub ? `<div style="${H}margin-top:3px;font-size:15px;letter-spacing:.1em;color:${P.acc}">${esc_(o.sub)}</div>` : ''}
       </td>
-      <td valign="middle" align="right" width="104" style="border-bottom:3px solid ${P.acc};padding-bottom:10px">
-        <a href="${SITE_URL}" style="display:inline-block;background:${P.dark};border-radius:8px;padding:5px 9px"><img src="${SITE_URL}assets/img/logo.png" width="80" height="32" alt="PCI" style="display:block;border:0;color:#39FF14;${H}font-size:18px"></a></td>
+      <td valign="middle" align="right" width="96" style="border-bottom:3px solid ${P.acc};padding-bottom:10px">
+        <a href="${SITE_URL}"><img src="${SITE_URL}assets/img/logo.png" width="90" height="36" alt="PCI" style="display:block;border:0;color:${P.acc};${H}font-size:18px"></a></td>
     </tr></table>
     ${o.hi ? `<div style="margin-top:10px;font-size:14px;color:${P.mute}">${o.hi}</div>` : ''}
   </td></tr>
@@ -377,10 +377,8 @@ ${o.preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0
 }
 
 // PCI colours, matching the website
-// Light, like the website's light mode: cream page, white cards, dark green text, neon green on dark green buttons.
-const P = { bg: '#F3EFE4', card: '#FFFFFF', line: '#DCD6C4', fg: '#061D01', mute: '#4A5A44', acc: '#061D01', ink: '#39FF14', dark: '#061D01' };
-const COLOR = { dropin: '#39FF14', league: '#F2DA1A', special: '#FA00BE', tourn: '#C11ABA', social: '#9CB893' }; // bars, chips, key
-const TEXT = { dropin: '#1A7300', league: '#7A6400', special: '#B8008C', tourn: '#9A1494', social: '#4A5A44' };  // readable on white
+const P = { bg: '#061D01', card: '#0B2906', line: '#244A1B', fg: '#FFFFFF', mute: '#9CB893', acc: '#39FF14', ink: '#061D01', dark: '#061D01' };
+const COLOR = { dropin: '#39FF14', league: '#F2DA1A', special: '#FA00BE', tourn: '#FA34BC', social: '#9CB893' };
 const DIV = { 1: '#F4FF00', 2: '#FF7A00', 3: '#FF2B2B' };
 const H = "font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-weight:800;text-transform:uppercase;";
 const BODY = "'Barlow',Arial,Helvetica,sans-serif";
