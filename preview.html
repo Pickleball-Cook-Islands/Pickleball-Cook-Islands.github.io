@@ -492,6 +492,11 @@ const LEAGUES=[
 const leagueUrl=id=>'leagues/league.html?l='+encodeURIComponent(id||LEAGUES[0].id);
 const FB='https://www.facebook.com/profile.php?id=61572906476405';
 
+// Events come from the club's Google Calendar once CAL_FEED_URL is set to the Apps Script web app URL
+// (see apps-script/README.md). While it is '', the lists below (DROPINS, DROPIN_CHANGES, EVENTS) are used instead.
+// DROPINS also feeds the weekly timetable on the Visitors page, so keep it current either way.
+const CAL_FEED_URL='https://script.google.com/macros/s/AKfycbwGmW_mM3iPMEAdM343dqCNMXF_zY7fsacc4kegVaQVL6AxZOfC0VsOALmiRU-D5KgM/exec';
+
 // Members drop-in sessions (weekly). day: 0=Sun..6=Sat. Shown 4 weeks ahead.
 const DROPINS=[
   {day:1,time:'5:00pm – 7:00pm',place:'TSA'},
@@ -585,7 +590,28 @@ const DAY=['SUN','MON','TUE','WED','THU','FRI','SAT'];
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-function allEvents(){const out=EVENTS.slice();
+// Calendar feed: CAL holds the feed's events once loaded (or a cached copy); calState is loading | ok | error
+let CAL=null,calState='ok';
+const FEED=(()=>{try{const q=new URLSearchParams(location.search).get('events');if(q&&/^(localhost|127\.0\.0\.1)$/.test(location.hostname))return q}catch(_){}return CAL_FEED_URL})();
+function placeKey(p){if(!p)return p;const s=p.toLowerCase();
+  for(const [k,v] of Object.entries(VENUES))if([k,v.name,v.short].some(n=>n&&s.includes(n.toLowerCase())))return k;
+  return p.split(',')[0].trim()}
+function feedEvents(list){const lastDropin=new Date(today);lastDropin.setDate(lastDropin.getDate()+DROPIN_WEEKS*7);
+  return (list||[]).filter(e=>e&&typeof e.date==='string'&&e.title&&KIND[e.kind]).map(e=>({...e,place:placeKey(e.place)}))
+    .filter(e=>e.kind!=='dropin'||parse(e.date)<lastDropin)}
+function loadFeed(){if(!FEED)return;
+  try{const c=JSON.parse(localStorage.getItem('pci_events')||'null');if(c&&c.url===FEED&&Array.isArray(c.events))CAL=c.events}catch(_){}
+  if(!CAL)calState='loading';
+  fetch(FEED,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(j=>{
+    if(!j||!Array.isArray(j.events))throw new Error(j&&j.error||'Bad feed');
+    const same=JSON.stringify(j.events)===JSON.stringify(CAL);CAL=j.events;calState='ok';
+    try{localStorage.setItem('pci_events',JSON.stringify({url:FEED,events:CAL}))}catch(_){}
+    if(!same)render()
+  }).catch(err=>{console.warn('Events feed:',err);if(!CAL){calState='error';render()}})}
+const CAL_MSG=()=>calState==='loading'?'Loading events…':`Couldn't load events right now. Try again shortly, or check our <a href="${FB}" target="_blank" rel="noopener">Facebook page</a>.`;
+function allEvents(){if(FEED){const key=e=>e.date.length===7?e.date+'-99':e.date;
+  return feedEvents(CAL).sort((a,b)=>key(a)<key(b)?-1:key(a)>key(b)?1:evSpan(a)[0]-evSpan(b)[0])}
+  const out=EVENTS.slice();
   for(let i=0;i<DROPIN_WEEKS*7;i++){const d=new Date(today);d.setDate(d.getDate()+i);
     if(EVENTS.some(e=>e.kind==='special'&&e.date===iso(d)))continue;
     DROPINS.filter(x=>x.day===d.getDay()).forEach(x=>{const ch=DROPIN_CHANGES.find(c=>c.date===iso(d)&&c.time===x.time);out.push({date:iso(d),kind:'dropin',title:'Members Drop-in Session',time:x.time,place:ch?ch.place:x.place,moved:!!ch})})}
@@ -617,7 +643,7 @@ let mode=document.documentElement.dataset.mode==='dark'?'dark':'light';
 function applyTheme(){document.documentElement.dataset.mode=mode;const dark=mode==='dark';
 const b=document.getElementById('themebtn');if(b){b.title=dark?'Switch to light mode':'Switch to dark mode';b.setAttribute('aria-pressed',String(dark))}
 const m=document.querySelector('meta[name=theme-color]');if(m)m.content=dark?'#0B2906':'#FFFFFF'}
-function weekStrip(){const ev=allEvents(),now=new Date(new Date().toLocaleString('en-US',{timeZone:'Pacific/Rarotonga'})),nm=now.getHours()*60+now.getMinutes();let h='<div class="wk">';
+function weekStrip(){if(calState!=='ok')return `<p class="note">${CAL_MSG()}</p>`;const ev=allEvents(),now=new Date(new Date().toLocaleString('en-US',{timeZone:'Pacific/Rarotonga'})),nm=now.getHours()*60+now.getMinutes();let h='<div class="wk">';
 for(let i=0;i<7;i++){const d=new Date(today);d.setDate(d.getDate()+i);const L=ev.filter(e=>e.date===iso(d));
 h+=`<div class="wd${i===0?' now':''}${L.some(e=>e.kind==='league')?' lg':''}"><b>${i===0?'Today':DAY[d.getDay()]+' '+d.getDate()}</b>${L.length?L.map(e=>`<span class="ws ${e.kind}${i===0&&evSpan(e)[1]<=nm?' done':''}"><i>${esc(e.time||(e.kind==='league'?'From 1pm':''))}</i>${esc(e.kind==='dropin'?'Drop-in':e.title)}${e.place?' · '+esc(e.place):''}</span>`).join(''):'<em>No sessions</em>'}</div>`}
 return h+'</div>'}
@@ -639,7 +665,7 @@ function nextSessions(n){const now=new Date(new Date().toLocaleString('en-US',{t
 return allEvents().filter(e=>{const d=parse(e.date);if(!d||d<today)return false;return e.date!==t0||evSpan(e)[1]>nm}).slice(0,n).map(e=>({e,live:e.date===t0&&evSpan(e)[0]<=nm}))}
 function whenLabel(x){const d=parse(x.e.date),days=Math.round((d-today)/864e5);return x.live?'On now':days===0?'Today':days===1?'Tomorrow':DAYN[d.getDay()]+' '+d.getDate()+' '+MONTHS[d.getMonth()].slice(0,3)}
 function nextPanel(){const L=nextSessions(2);
-if(!L.length)return `<div class="dh-t dnext"><div class="k">Next session</div><h2>Nothing scheduled</h2><p class="where">Check the calendar or our Facebook page for the next session.</p><div class="dh-b"><button class="btn" data-go="cal">See what's on</button></div></div>`;
+if(!L.length)return `<div class="dh-t dnext"><div class="k">Next session</div><h2>${calState==='loading'?'Loading…':'Nothing scheduled'}</h2><p class="where">${calState==='ok'?'Check the calendar or our Facebook page for the next session.':CAL_MSG()}</p><div class="dh-b"><button class="btn" data-go="cal">See what's on</button></div></div>`;
 const x=L[0],e=x.e,v=VENUES[e.place],lg=e.kind==='league';
 const time=e.time?e.time.split('–').map(t=>t.trim()):[lg?'From 1pm':'All day'];
 const what=e.kind==='dropin'?'Members drop-in':e.title;
@@ -664,7 +690,7 @@ function viewCal(){
   for(const e of up){const d=parse(e.date);const m=d?MONTHS[d.getMonth()]+' '+d.getFullYear():MONTHS[+e.date.split('-')[1]-1]+' '+e.date.split('-')[0];
     if(m!==last){h+=`<div class="month">${m}</div>`;last=m}
     h+=evCard(e)}
-  if(!up.length)h+=`<p class="note">Nothing scheduled in this category yet.</p>`;
+  if(!up.length)h+=`<p class="note">${calState==='ok'?'Nothing scheduled in this category yet.':CAL_MSG()}</p>`;
   h+=`<p class="note">Times are Rarotonga time. Drop-in sessions are for PCI members. New events are added here as they're confirmed.</p>`;
   return h}
 
@@ -829,7 +855,7 @@ if(e.target.closest('#themebtn')){mode=mode==='dark'?'light':'dark';try{localSto
   render();window.scrollTo(0,0);
 });
 document.addEventListener('keydown',e=>{const v=document.getElementById('lb');if(!v||v.hidden)return;if(e.key==='Escape')v.hidden=true;const b=v.querySelector(e.key==='ArrowLeft'?'.lb-p':e.key==='ArrowRight'?'.lb-n':null);if(b)b.click()});
-applyTheme();render();
+applyTheme();loadFeed();render();
 </script>
 </body>
 </html>

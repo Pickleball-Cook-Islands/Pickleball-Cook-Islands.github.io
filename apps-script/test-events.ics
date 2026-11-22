@@ -1,0 +1,149 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Pickleball Cook Islands//Test events//EN
+CALSCALE:GREGORIAN
+X-WR-TIMEZONE:Pacific/Rarotonga
+BEGIN:VTIMEZONE
+TZID:Pacific/Rarotonga
+BEGIN:STANDARD
+DTSTART:19700101T000000
+TZOFFSETFROM:-1000
+TZOFFSETTO:-1000
+TZNAME:CKT
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+UID:dropin-mon@pci-test
+DTSTAMP:20261122T000000Z
+DTSTART;TZID=Pacific/Rarotonga:20261123T170000
+DTEND;TZID=Pacific/Rarotonga:20261123T190000
+RRULE:FREQ=WEEKLY;BYDAY=MO;UNTIL=20270123T095959Z
+SUMMARY:[TEST] Members Drop-in Session
+LOCATION:Telecom Sports Arena\, Nikao\, Rarotonga
+DESCRIPTION:#dropin\nTest event from the shared PCI calendar.
+END:VEVENT
+BEGIN:VEVENT
+UID:dropin-tue@pci-test
+DTSTAMP:20261122T000000Z
+DTSTART;TZID=Pacific/Rarotonga:20261124T110000
+DTEND;TZID=Pacific/Rarotonga:20261124T130000
+RRULE:FREQ=WEEKLY;BYDAY=TU;UNTIL=20270123T095959Z
+SUMMARY:[TEST] Members Drop-in Session
+LOCATION:Telecom Sports Arena\, Nikao\, Rarotonga
+DESCRIPTION:#dropin\nTest event from the shared PCI calendar.
+END:VEVENT
+BEGIN:VEVENT
+UID:dropin-wed@pci-test
+DTSTAMP:20261122T000000Z
+DTSTART;TZID=Pacific/Rarotonga:20261125T110000
+DTEND;TZID=Pacific/Rarotonga:20261125T130000
+RRULE:FREQ=WEEKLY;BYDAY=WE;UNTIL=20270123T095959Z
+SUMMARY:[TEST] Members Drop-in Session
+LOCATION:Telecom Sports Arena\, Nikao\, Rarotonga
+DESCRIPTION:#dropin\nTest event from the shared PCI calendar.
+END:VEVENT
+BEGIN:VEVENT
+UID:dropin-fri-am@pci-test
+DTSTAMP:20261122T000000Z
+DTSTART;TZID=Pacific/Rarotonga:20261127T110000
+DTEND;TZID=Pacific/Rarotonga:20261127T130000
+RRULE:FREQ=WEEKLY;BYDAY=FR;UNTIL=20270123T095959Z
+EXDATE;TZID=Pacific/Rarotonga:20261225T110000
+EXDATE;TZID=Pacific/Rarotonga:20270101T110000
+SUMMARY:[TEST] Members Drop-in Session
+LOCATION:Telecom Sports Arena\, Nikao\, Rarotonga
+DESCRIPTION:#dropin\nTest event from the shared PCI calendar.
+END:VEVENT
+BEGIN:VEVENT
+UID:dropin-fri-am@pci-test
+DTSTAMP:20261122T000000Z
+RECURRENCE-ID;TZID=Pacific/Rarotonga:20261204T110000
+DTSTART;TZID=Pacific/Rarotonga:20261204T110000
+DTEND;TZID=Pacific/Rarotonga:20261204T130000
+SUMMARY:[TEST] Members Drop-in Session
+LOCATION:Avatea Hall\, Apii Nikao School\, Nikao\, Rarotonga
+DESCRIPTION:#dropin\nTest event from the shared PCI calendar.\nMoved to Ava
+ tea Hall this week only.
+END:VEVENT
+BEGIN:VEVENT
+UID:dropin-fri-pm@pci-test
+DTSTAMP:20261122T000000Z
+DTSTART;TZID=Pacific/Rarotonga:20261127T170000
+DTEND;TZID=Pacific/Rarotonga:20261127T190000
+RRULE:FREQ=WEEKLY;BYDAY=FR;UNTIL=20270123T095959Z
+EXDATE;TZID=Pacific/Rarotonga:20261225T170000
+EXDATE;TZID=Pacific/Rarotonga:20270101T170000
+SUMMARY:[TEST] Members Drop-in Session
+LOCATION:Avatea Hall\, Apii Nikao School\, Nikao\, Rarotonga
+DESCRIPTION:#dropin\nTest event from the shared PCI calendar.
+END:VEVENT
+BEGIN:VEVENT
+UID:league-r7@pci-test
+DTSTAMP:20261122T000000Z
+DTSTART;TZID=Pacific/Rarotonga:20261128T130000
+DTEND;TZID=Pacific/Rarotonga:20261128T170000
+SUMMARY:[TEST] TJPL IV · Round 7
+LOCATION:Avatea Hall\, Apii Nikao School\, Nikao\, Rarotonga
+DESCRIPTION:#league\nDiv 1 · 1pm\nDiv 2 · 2pm\nDiv 3 · 3pm
+END:VEVENT
+BEGIN:VEVENT
+UID:league-finals@pci-test
+DTSTAMP:20261122T000000Z
+DTSTART;TZID=Pacific/Rarotonga:20261205T130000
+DTEND;TZID=Pacific/Rarotonga:20261205T180000
+SUMMARY:[TEST] TJPL IV Finals Day
+LOCATION:Avatea Hall\, Apii Nikao School\, Nikao\, Rarotonga
+DESCRIPTION:#league\nDiv 3\, then Div 2\, then Div 1. Prize giving straight
+  after at Trader Jack's.
+END:VEVENT
+BEGIN:VEVENT
+UID:social-newmembers@pci-test
+DTSTAMP:20261122T000000Z
+DTSTART;TZID=Pacific/Rarotonga:20261210T170000
+DTEND;TZID=Pacific/Rarotonga:20261210T190000
+SUMMARY:[TEST] New Members' Night
+LOCATION:Telecom Sports Arena\, Nikao\, Rarotonga
+DESCRIPTION:#social\nBring a friend who wants to try pickleball. Paddles an
+ d balls provided.
+END:VEVENT
+BEGIN:VEVENT
+UID:special-xmas@pci-test
+DTSTAMP:20261122T000000Z
+DTSTART;TZID=Pacific/Rarotonga:20261212T170000
+DTEND;TZID=Pacific/Rarotonga:20261212T200000
+SUMMARY:[TEST] Christmas Pickle Party
+LOCATION:Muri Beach Club Hotel\, Muri
+DESCRIPTION:#special #featured\nFestive dress-up\, round-robin games and a 
+ shared plate. Not a real venue booking: this is a test.
+END:VEVENT
+BEGIN:VEVENT
+UID:tourn-summer@pci-test
+DTSTAMP:20261122T000000Z
+DTSTART;VALUE=DATE:20270115
+DTEND;VALUE=DATE:20270118
+SUMMARY:[TEST] Summer Slam Tournament
+LOCATION:Rarotonga
+DESCRIPTION:#tournament #featured\nThree-day test tournament. Should show a
+ s Fri 15 – Sun 17 Jan.
+END:VEVENT
+BEGIN:VEVENT
+UID:social-tbc@pci-test
+DTSTAMP:20261122T000000Z
+DTSTART;TZID=Pacific/Rarotonga:20270120T170000
+DTEND;TZID=Pacific/Rarotonga:20270120T200000
+SUMMARY:[TEST] End of Summer BBQ
+LOCATION:Telecom Sports Arena\, Nikao\, Rarotonga
+DESCRIPTION:#social #tbc\nDay to be confirmed: the site should show January
+  only.
+END:VEVENT
+BEGIN:VEVENT
+UID:untagged@pci-test
+DTSTAMP:20261122T000000Z
+DTSTART;TZID=Pacific/Rarotonga:20261219T100000
+DTEND;TZID=Pacific/Rarotonga:20261219T120000
+SUMMARY:[TEST] Committee Open Day
+LOCATION:TSA
+DESCRIPTION:No tag on this one\, so the site should show it as a special ev
+ ent.
+END:VEVENT
+END:VCALENDAR
