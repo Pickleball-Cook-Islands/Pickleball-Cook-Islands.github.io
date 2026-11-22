@@ -90,7 +90,14 @@ an upcoming event is **added**, **cancelled** (deleted from the calendar), or **
 4. Pick `setupChangeAlerts` in the toolbar and press Run. Allow access when asked. This starts the 15-minute check and
    records the week as it is now, so existing events don't count as new.
 
-`previewChanges` logs what would be emailed right now without sending or waiting. `stopChangeAlerts` turns it off.
+Other functions to run from the editor (open `change-alerts` first, so they show in the function menu):
+
+| Function | What it does |
+|---|---|
+| `sendChangeTestToMe` | Emails the update to you only, straight away. Uses this week's real changes, or a made-up sample if there are none. Changes nothing for subscribers |
+| `sendChangesNow` | Sends this week's real changes to every subscriber now, skipping the 30-minute wait |
+| `previewChanges` | Logs what would be emailed right now, without sending |
+| `stopChangeAlerts` | Turns change emails off |
 
 ## Changing the email
 

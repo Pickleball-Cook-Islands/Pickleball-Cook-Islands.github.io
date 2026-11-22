@@ -16,9 +16,9 @@
  */
 
 // The events feed's /exec URL (the same as CAL_FEED_URL in index.html).
-const FEED_URL = '';
+const FEED_URL = 'https://script.google.com/macros/s/AKfycbwGmW_mM3iPMEAdM343dqCNMXF_zY7fsacc4kegVaQVL6AxZOfC0VsOALmiRU-D5KgM/exec';
 // This script's own web app URL (ends in /exec). Fill in after the first deployment.
-const WEB_APP_URL = '';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxyykIm_4DX_JejIfnDOUh8earpWkGJr0HMsQfQRPqSY-Uc3Tv1N58wFo7WkW8L4CDH/exec';
 const SITE_URL = 'https://pickleball-cook-islands.github.io/';
 // Who gets warnings (quota, errors). '' = the account that owns the script.
 const ADMIN_EMAIL = '';

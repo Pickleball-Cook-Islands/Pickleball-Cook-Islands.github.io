@@ -52,6 +52,47 @@ function previewChanges() {
   Logger.log(changes.length ? changesText_(changes) : 'No changes to email.');
 }
 
+/**
+ * Emails the update to YOU only, straight away. Uses this week's real changes if there
+ * are any; otherwise makes up a sample (the next event this week shown as new, changed
+ * and cancelled) so you can see the email. Changes nothing: subscribers still get the
+ * real update after the usual wait.
+ */
+function sendChangeTestToMe() {
+  const win = changeWindow_(new Date());
+  const cur = snapshot_(win);
+  const base = JSON.parse(PropertiesService.getScriptProperties().getProperty('CHG_BASE') || 'null');
+  let changes = base && base.key === win.key ? diffChanges_(base.ev, cur, new Date()) : [];
+  if (!changes.length) {
+    const next = Object.values(cur).filter(e => Date.parse(e.e) > Date.now()).sort((a, b) => a.s.localeCompare(b.s))[0];
+    if (!next) throw new Error('No upcoming events this week to make a sample from. Add one to the calendar first.');
+    const moved = Object.assign({}, next, { place: 'Avatea Hall', loc: 'Avatea Hall' });
+    if (/avatea/i.test(next.loc)) moved.place = moved.loc = 'TSA';
+    changes = [{ type: 'added', now: next }, { type: 'moved', now: moved, was: next }, { type: 'cancelled', was: next }];
+    Logger.log('No real changes this week, so the test email uses a sample.');
+  }
+  sendChangesTo_(buildChanges_(changes, win), Session.getEffectiveUser().getEmail(), '', '');
+  Logger.log('Sent to %s: %s change(s).', Session.getEffectiveUser().getEmail(), changes.length);
+}
+
+/**
+ * Sends this week's real changes to every confirmed subscriber now, without waiting
+ * for the 30 quiet minutes. Does nothing if there are no changes.
+ */
+function sendChangesNow() {
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const win = changeWindow_(new Date());
+    const cur = snapshot_(win);
+    const base = JSON.parse(PropertiesService.getScriptProperties().getProperty('CHG_BASE') || 'null');
+    if (!base || base.key !== win.key) return Logger.log('No saved state for this week yet. Run setupChangeAlerts().');
+    const changes = diffChanges_(base.ev, cur, new Date());
+    if (!changes.length) return Logger.log('No changes to send.');
+    sendChanges_(changes, win);
+    saveBase_(win.key, cur);
+  } finally { lock.releaseLock(); }
+}
+
 /** Time trigger, every 15 minutes. */
 function checkChanges() {
   const lock = LockService.getScriptLock();
