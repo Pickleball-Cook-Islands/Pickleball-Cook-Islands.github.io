@@ -86,7 +86,7 @@ function toItem(ev) {
   lines.forEach(line => {
     line = line.replace(/#([a-z-]+)/gi, (m, t) => { tags[t.toLowerCase()] = 1; return ''; }).trim();
     if (!line) return;
-    const d = /^div(?:ision)?\s*(\d)\b/i.exec(line);
+    const d = /^div(?:ision)?\s*(\d)\b[^,;]{0,24}$/i.exec(line); // "Div 1 · 1pm", not a sentence about divisions
     if (d) divs.push([+d[1], line.replace(/^division/i, 'Div')]);
     else note.push(line);
   });
