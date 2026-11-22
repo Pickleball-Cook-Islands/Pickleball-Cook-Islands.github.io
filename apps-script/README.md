@@ -1,5 +1,7 @@
 # Events from Google Calendar
 
+For the Sunday "week ahead" email to subscribers, see [WEEKLY-EMAIL.md](WEEKLY-EMAIL.md).
+
 The site's Events tab, "Next session" panel and week strip come from the club's shared Google Calendar.
 [`events-feed.gs`](events-feed.gs) is a small Google Apps Script that reads the calendar and gives the site
 the upcoming events. Admins only ever use Google Calendar. Changes show on the site within about 5 minutes.

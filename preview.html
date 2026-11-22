@@ -195,6 +195,10 @@ h2{font-family:var(--display);font-weight:800;font-size:32px;line-height:1;margi
 .bank .tbc{color:var(--tj);font-weight:600}
 .copy{font:inherit;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;border-radius:8px;border:1px solid var(--acc);background:none;color:var(--acc);cursor:pointer;margin-left:8px}
 .btn.wide{display:block;text-align:center}
+.subcard{display:flex;align-items:center;gap:16px;margin:24px 0 8px;padding:16px 18px;border:2px solid var(--line);border-radius:14px}
+.subcard .txt{flex:1;display:flex;flex-direction:column;gap:4px}.subcard .txt span{color:var(--mute);font-size:14px}
+.subcard .btn{white-space:nowrap}
+@media (max-width:520px){.subcard{flex-direction:column;align-items:stretch}.subcard .btn{text-align:center}}
 .btn.off{background:none;border:2px dashed var(--line);color:var(--mute)}
 .vband{display:flex;align-items:center;gap:14px;border-radius:14px;padding:14px 16px;background:var(--bg2);border:2px solid var(--acc);cursor:pointer;font:inherit;color:var(--fg);text-align:left;width:100%}
 .vband b{display:block;font-family:var(--display);font-weight:800;font-size:22px;text-transform:uppercase;line-height:1.05}
@@ -497,6 +501,9 @@ const FB='https://www.facebook.com/profile.php?id=61572906476405';
 // DROPINS also feeds the weekly timetable on the Visitors page, so keep it current either way.
 const CAL_FEED_URL='https://script.google.com/macros/s/AKfycbwGmW_mM3iPMEAdM343dqCNMXF_zY7fsacc4kegVaQVL6AxZOfC0VsOALmiRU-D5KgM/exec';
 
+// Week ahead email: the sign-up Google Form link from apps-script/weekly-email.gs setup(). '' hides the sign-up buttons.
+const SUBSCRIBE_URL='';
+
 // Members drop-in sessions (weekly). day: 0=Sun..6=Sat. Shown 4 weeks ahead.
 const DROPINS=[
   {day:1,time:'5:00pm – 7:00pm',place:'TSA'},
@@ -677,7 +684,7 @@ function viewHome(){
 const champs=[];HOF.forEach(c=>(c.divs||c.cats||[]).forEach(d=>{const p=d.champ;if(p&&p.img&&HOF_IMG[p.img])champs.push({n:p.team,s:c.title.replace("Trader Jack's Pickleball League",'TJPL').replace('Cook Islands Pickleball Open','CI Open')+(d.div?' · Div '+d.div:d.cat?' · '+d.cat:''),img:HOF_IMG[p.img]})}));
 const fees=FEES.map(f=>`<div><span>${esc(f.name)}</span><b>${f.amt}${f.per?`<small> ${f.per}</small>`:''}</b></div>`).join('');
 return `<section class="dhero" aria-label="Next session and club photos">${nextPanel()}${heroCarousel()}</section>
-<div class="lbl">This week</div>${weekStrip()}<button class="seemore" data-go="cal">Full calendar →</button>
+<div class="lbl">This week</div>${weekStrip()}<button class="seemore" data-go="cal">Full calendar →</button>${SUBSCRIBE_URL?`<a class="seemore" href="${esc(SUBSCRIBE_URL)}" target="_blank" rel="noopener">Get the week ahead by email →</a>`:''}
 <section class="dhi" aria-label="Welcome"><div><div class="k">Pickleball in Rarotonga</div><h2>${DROPINS.length} sessions a week. <em>Come play.</em></h2></div><div><p>Drop-ins, the Trader Jack's league and the Cook Islands Open. Members and visitors welcome, paddles and balls provided.</p><div class="dh-b"><button class="btn" data-go="visit">Visiting? Start here</button><button class="btn ghost" data-go="join">Join the club</button></div></div></section>
 <div class="dgrid"><div class="dcol"><div class="lbl">Club news</div>${NEWS.slice(0,2).map(newsCard).join('')}<button class="seemore" data-go="news">All news →</button></div><div class="dcol"><div class="lbl">Competitions</div>${linkCards()}</div><div class="dcol"><div class="lbl">Membership</div><div class="dfees">${fees}<button class="btn" data-go="join">Become a member</button></div></div></div>
 <div class="lbl">Hall of Fame · Latest champions</div><div class="dhof">${champs.slice(0,4).map(c=>`<div><img src="${c.img}" alt="" loading="lazy"><b>${esc(c.n)}</b><span>${esc(c.s)}</span></div>`).join('')}</div><button class="seemore" data-go="hof">See every winner →</button>
@@ -692,7 +699,8 @@ function viewCal(){
     h+=evCard(e)}
   if(!up.length)h+=`<p class="note">${calState==='ok'?'Nothing scheduled in this category yet.':CAL_MSG()}</p>`;
   h+=`<p class="note">Times are Rarotonga time. Drop-in sessions are for PCI members. New events are added here as they're confirmed.</p>`;
-  return h}
+  return h+subCard()}
+function subCard(){return SUBSCRIBE_URL?`<div class="subcard"><div class="txt"><b>Get the week ahead by email</b><span>Every Sunday morning: the week's drop-ins, league days and events. Unsubscribe any time.</span></div><a class="btn" href="${esc(SUBSCRIBE_URL)}" target="_blank" rel="noopener">Sign up</a></div>`:''}
 
 function viewNews(){return `<h2>Club news</h2>${NEWS.map(newsCard).join('')}<a class="lk fb" href="${FB}" target="_blank" rel="noopener"><div class="ic">f</div><div class="txt"><b>More on Facebook</b><span>Pickleball Cook Islands</span></div><div class="go">→</div></a>`}
 

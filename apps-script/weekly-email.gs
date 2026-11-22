@@ -1,0 +1,324 @@
+/**
+ * Pickleball Cook Islands: "week ahead" email.
+ *
+ * Visitors sign up with a Google Form, confirm by email, then get an email
+ * every Sunday morning listing the week's sessions and events. The events come
+ * from the same calendar feed the website uses (events-feed.gs), so the email
+ * always matches the site.
+ *
+ * Setup is in apps-script/WEEKLY-EMAIL.md. In short: new Apps Script project in
+ * the club account, paste this file, set FEED_URL and SITE_URL, run setup(),
+ * deploy as a web app (Execute as: Me, Who has access: Anyone), paste the
+ * /exec URL into WEB_APP_URL, deploy a new version.
+ *
+ * Free Gmail accounts can email about 100 recipients a day from a script.
+ * sendWeekly() stops before the limit and emails ADMIN_EMAIL a warning.
+ */
+
+// The events feed's /exec URL (the same as CAL_FEED_URL in index.html).
+const FEED_URL = '';
+// This script's own web app URL (ends in /exec). Fill in after the first deployment.
+const WEB_APP_URL = '';
+const SITE_URL = 'https://pickleball-cook-islands.github.io/';
+// Who gets warnings (quota, errors). '' = the account that owns the script.
+const ADMIN_EMAIL = '';
+
+const CLUB = 'Pickleball Cook Islands';
+const TZ = 'Pacific/Rarotonga';
+const SEND_HOUR = 7;        // Sunday, Rarotonga time (Google runs it within the hour)
+const COMING_UP_DAYS = 28;  // "Coming up" lists league days and events this far after the week
+const QUOTA_RESERVE = 3;    // emails kept back for the admin warning and new sign-ups
+const WARN_AT = 80;         // warn the admin once this many people are subscribed
+const MAX_CONFIRMS_PER_DAY = 20; // caps confirmation emails, so form spam can't use up the Sunday quota
+
+const SHEET = 'Subscribers';
+const COLS = ['Email', 'Name', 'Status', 'Token', 'Signed up', 'Confirmed', 'Unsubscribed', 'Last sent'];
+const C = {}; COLS.forEach((c, i) => { C[c] = i; });
+const KIND = {
+  league: "Trader Jack's league", dropin: 'Members drop-in', special: 'Special event',
+  tourn: 'Tournament', social: 'Social'
+};
+
+/* ---------- One-time setup ---------- */
+
+/** Run once from the editor. Creates the form, the subscribers sheet and the triggers. */
+function setup() {
+  const props = PropertiesService.getScriptProperties();
+  if (props.getProperty('FORM_ID')) {
+    Logger.log('Already set up. Form: ' + FormApp.openById(props.getProperty('FORM_ID')).getPublishedUrl());
+    return;
+  }
+  const ss = SpreadsheetApp.create(CLUB + ' – Week ahead subscribers');
+  const form = FormApp.create(CLUB + ' – Week ahead emails')
+    .setDescription("Get an email every Sunday morning with the week's drop-ins, league days and events. " +
+      "We'll send you a link to confirm first. Every email has a one-click unsubscribe link. " +
+      'We only use your email address for these emails.')
+    .setConfirmationMessage("Thanks! Check your inbox (and spam folder) for an email to confirm your subscription.")
+    .setCollectEmail(false)
+    .setAllowResponseEdits(false)
+    .setShowLinkToRespondAgain(false);
+  form.addTextItem().setTitle('Email address').setRequired(true)
+    .setValidation(FormApp.createTextValidation().setHelpText('Enter a valid email address').requireTextIsEmail().build());
+  form.addTextItem().setTitle('First name').setRequired(false);
+  form.setDestination(FormApp.DestinationType.SPREADSHEET, ss.getId());
+
+  const sh = ss.insertSheet(SHEET, 0);
+  sh.appendRow(COLS);
+  sh.setFrozenRows(1);
+  sh.getRange(1, 1, 1, COLS.length).setFontWeight('bold');
+
+  props.setProperties({ FORM_ID: form.getId(), SHEET_ID: ss.getId() });
+  ScriptApp.newTrigger('onSignup').forForm(form).onFormSubmit().create();
+  ScriptApp.newTrigger('sendWeekly').timeBased().onWeekDay(ScriptApp.WeekDay.SUNDAY)
+    .atHour(SEND_HOUR).inTimezone(TZ).create();
+
+  Logger.log('Form (share this link): ' + form.getPublishedUrl());
+  Logger.log('Subscribers sheet: ' + ss.getUrl());
+}
+
+/* ---------- Sign-up and confirm / unsubscribe ---------- */
+
+/** Form trigger: add or update the subscriber and send the confirmation email. */
+function onSignup(e) {
+  const answers = {};
+  e.response.getItemResponses().forEach(r => { answers[r.getItem().getTitle()] = String(r.getResponse() || '').trim(); });
+  const email = (answers['Email address'] || '').toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return;
+  const name = answers['First name'] || '';
+
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  let row, token;
+  try {
+    const sh = sheet_();
+    const data = sh.getDataRange().getValues();
+    const i = data.findIndex((r, k) => k > 0 && String(r[C.Email]).toLowerCase() === email);
+    if (i > 0 && data[i][C.Status] === 'confirmed') {
+      if (name) sh.getRange(i + 1, C.Name + 1).setValue(name);
+      return; // already subscribed: nothing to send
+    }
+    token = Utilities.getUuid();
+    row = [email, name, 'pending', token, new Date(), '', '', ''];
+    if (i > 0) sh.getRange(i + 1, 1, 1, COLS.length).setValues([row]);
+    else sh.appendRow(row);
+  } finally { lock.releaseLock(); }
+
+  const props = PropertiesService.getScriptProperties();
+  const today = fmt_(new Date(), 'yyyy-MM-dd');
+  const count = props.getProperty('CONFIRMS_DAY') === today ? +props.getProperty('CONFIRMS_N') : 0;
+  if (count >= MAX_CONFIRMS_PER_DAY || MailApp.getRemainingDailyQuota() <= QUOTA_RESERVE) {
+    Logger.log('Confirmation for ' + email + ' not sent (daily limit). They can sign up again tomorrow.');
+    return;
+  }
+  props.setProperties({ CONFIRMS_DAY: today, CONFIRMS_N: String(count + 1) });
+  const link = webAppUrl_() + '?a=confirm&t=' + token;
+  const hi = name ? 'Kia orana ' + esc_(name) + ',' : 'Kia orana,';
+  MailApp.sendEmail({
+    to: email, name: CLUB,
+    subject: 'Confirm your PCI week ahead emails',
+    body: (name ? 'Kia orana ' + name + ',' : 'Kia orana,') + '\n\nConfirm your subscription to the Pickleball Cook Islands week ahead email:\n' + link +
+      "\n\nIf you didn't sign up, ignore this email and you won't hear from us.",
+    htmlBody: shell_(`<p>${hi}</p><p>Tap the button to start getting the Pickleball Cook Islands week ahead email every Sunday morning.</p>` +
+      `<p><a href="${link}" style="${BTN}">Confirm subscription</a></p>` +
+      `<p style="color:#666;font-size:13px">If you didn't sign up, ignore this email and you won't hear from us.</p>`, '')
+  });
+}
+
+/**
+ * Confirm and unsubscribe links open a page with a button. The change happens
+ * only when the button is pressed, so email link scanners that open links
+ * automatically can't confirm or unsubscribe anyone.
+ */
+function doGet(e) {
+  const p = (e && e.parameter) || {};
+  const a = p.a === 'unsub' ? 'unsub' : p.a === 'confirm' ? 'confirm' : '';
+  const t = /^[0-9a-f-]{36}$/i.test(p.t || '') ? p.t : '';
+  const title = a === 'unsub' ? 'Unsubscribe' : 'Confirm subscription';
+  const body = !a || !t
+    ? `<h1>${CLUB}</h1><p>This link isn't complete. Try the link in your email again.</p>`
+    : `<h1>${title}</h1><p id="m">${a === 'unsub'
+        ? 'Stop getting the PCI week ahead email?'
+        : 'Start getting the PCI week ahead email every Sunday morning?'}</p>
+       <button id="b" onclick="go()">${a === 'unsub' ? 'Unsubscribe' : 'Yes, subscribe me'}</button>
+       <script>function go(){var b=document.getElementById('b');b.disabled=true;b.textContent='One moment…';
+       google.script.run.withSuccessHandler(function(msg){document.getElementById('m').textContent=msg;b.remove()})
+       .withFailureHandler(function(){b.disabled=false;b.textContent='Try again'}).act('${a}','${t}')}</script>`;
+  const html = `<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>body{font-family:system-ui,sans-serif;max-width:480px;margin:40px auto;padding:0 16px;color:#0B2906}
+    h1{font-size:24px}button{${BTN}border:0;cursor:pointer;font-size:16px}a{color:#0B2906}</style>
+    ${body}<p style="margin-top:32px"><a href="${SITE_URL}" target="_top">${CLUB} website</a></p>`;
+  return HtmlService.createHtmlOutput(html).setTitle(title + ' – ' + CLUB);
+}
+
+/** Called from the confirm / unsubscribe page. */
+function act(a, t) {
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = sheet_();
+    const data = sh.getDataRange().getValues();
+    const i = data.findIndex((r, k) => k > 0 && r[C.Token] === t);
+    if (i < 1) return "We couldn't find that subscription. It may have been replaced by a newer sign-up.";
+    const r = i + 1;
+    if (a === 'confirm') {
+      if (data[i][C.Status] === 'unsubscribed') return "You're unsubscribed. Sign up again on the website to resubscribe.";
+      sh.getRange(r, C.Status + 1).setValue('confirmed');
+      if (!data[i][C.Confirmed]) sh.getRange(r, C.Confirmed + 1).setValue(new Date());
+      return "You're subscribed. Your first email arrives on Sunday morning.";
+    }
+    sh.getRange(r, C.Status + 1).setValue('unsubscribed');
+    sh.getRange(r, C.Unsubscribed + 1).setValue(new Date());
+    return "You're unsubscribed and won't get any more week ahead emails.";
+  } finally { lock.releaseLock(); }
+}
+
+/* ---------- The Sunday email ---------- */
+
+/**
+ * Time trigger (Sunday morning). Safe to run again by hand: anyone already sent
+ * this week's email is skipped.
+ */
+function sendWeekly() {
+  const week = buildWeek_(new Date());
+  const sh = sheet_();
+  const data = sh.getDataRange().getValues();
+  const subs = [];
+  for (let k = 1; k < data.length; k++) if (data[k][C.Status] === 'confirmed') subs.push(k);
+
+  let sent = 0, skipped = 0, failed = [];
+  for (const k of subs) {
+    if (data[k][C['Last sent']] === week.key) continue;
+    if (MailApp.getRemainingDailyQuota() <= QUOTA_RESERVE) { skipped++; continue; }
+    try {
+      sendWeekTo_(week, data[k][C.Email], data[k][C.Name], data[k][C.Token]);
+      sh.getRange(k + 1, C['Last sent'] + 1).setValue(week.key);
+      sent++;
+    } catch (err) { failed.push(data[k][C.Email] + ': ' + err.message); }
+  }
+  Logger.log(`Week ${week.key}: sent ${sent}, skipped for quota ${skipped}, failed ${failed.length}, subscribers ${subs.length}`);
+
+  const problems = [];
+  if (skipped) problems.push(`${skipped} subscriber(s) didn't get this week's email because the daily Gmail limit was reached. ` +
+    'Run sendWeekly again from the script editor tomorrow to send the rest.');
+  if (failed.length) problems.push('These sends failed:\n' + failed.join('\n'));
+  if (subs.length >= WARN_AT) problems.push(`There are ${subs.length} confirmed subscribers. A free Gmail account can send about 100 emails a day, ` +
+    'so it is time to plan a bigger sending option (see apps-script/WEEKLY-EMAIL.md).');
+  if (problems.length && MailApp.getRemainingDailyQuota() > 0) {
+    MailApp.sendEmail(ADMIN_EMAIL || Session.getEffectiveUser().getEmail(),
+      'PCI week ahead email: needs attention', problems.join('\n\n'));
+  }
+}
+
+/** Sends this week's email to you (the script owner) only. Doesn't touch the subscriber list. */
+function sendTestToMe() {
+  sendWeekTo_(buildWeek_(new Date()), Session.getEffectiveUser().getEmail(), '', '');
+}
+
+/** Logs this week's email as text, without sending anything. */
+function previewWeek() {
+  Logger.log(buildWeek_(new Date()).text);
+}
+
+function sendWeekTo_(week, email, name, token) {
+  const unsub = token ? webAppUrl_() + '?a=unsub&t=' + token : '';
+  const hi = name ? `Kia orana ${esc_(name)},` : 'Kia orana,';
+  const foot = unsub
+    ? `You're getting this because you subscribed on the ${CLUB} website. <a href="${unsub}" style="color:#666">Unsubscribe</a>`
+    : 'Test email: subscribers get an unsubscribe link here.';
+  MailApp.sendEmail({
+    to: email, name: CLUB, subject: week.subject,
+    body: (name ? `Kia orana ${name},` : 'Kia orana,') + '\n\n' + week.text + '\n\nWebsite: ' + SITE_URL + (unsub ? '\nUnsubscribe: ' + unsub : ''),
+    htmlBody: shell_(`<p>${hi}</p>${week.html}`, foot)
+  });
+}
+
+/** Builds the email for the 7 days starting on the given day (Rarotonga time). */
+function buildWeek_(from) {
+  const day0 = fmt_(from, 'yyyy-MM-dd');
+  const days = [];
+  for (let i = 0; i < 7; i++) days.push(addDays_(day0, i));
+  const endComing = addDays_(day0, 7 + COMING_UP_DAYS);
+
+  const events = fetchEvents_();
+  const inWeek = events.filter(e => e.date.length === 10 && e.date >= days[0] && e.date <= days[6]);
+  const later = events.filter(e => e.date.length === 10 && e.date > days[6] && e.date < endComing && e.kind !== 'dropin');
+
+  const label = d => fmt_(dateOf_(d), 'EEEE d MMMM');
+  const short = d => fmt_(dateOf_(d), 'EEE d MMM');
+  const subject = `PCI this week: ${short(days[0])} – ${short(days[6])}`;
+
+  let html = `<p>Here's what's on at ${CLUB} this week. Times are Rarotonga time.</p>`;
+  let text = `What's on at ${CLUB}, ${short(days[0])} – ${short(days[6])}. Times are Rarotonga time.\n`;
+  if (!inWeek.length) {
+    html += '<p><b>No sessions are scheduled this week.</b> Keep an eye on the website and Facebook for updates.</p>';
+    text += '\nNo sessions are scheduled this week.\n';
+  }
+  days.forEach(d => {
+    const L = inWeek.filter(e => e.date === d);
+    if (!L.length) return;
+    html += `<h3 style="margin:22px 0 6px;font-size:15px;text-transform:uppercase;letter-spacing:.04em;color:#0B2906">${label(d)}</h3>`;
+    text += `\n${label(d).toUpperCase()}\n`;
+    L.forEach(e => { html += eventHtml_(e); text += eventText_(e); });
+  });
+  if (later.length) {
+    html += '<h3 style="margin:28px 0 6px;font-size:15px;text-transform:uppercase;letter-spacing:.04em;color:#0B2906">Coming up</h3>';
+    text += '\nCOMING UP\n';
+    later.forEach(e => {
+      html += `<p style="margin:4px 0"><b>${short(e.date)}</b> · ${esc_(e.title)}${e.place ? ' · ' + esc_(place_(e.place)) : ''}</p>`;
+      text += `${short(e.date)} · ${e.title}${e.place ? ' · ' + place_(e.place) : ''}\n`;
+    });
+  }
+  html += `<p style="margin-top:24px"><a href="${SITE_URL}#cal" style="${BTN}">See the full calendar</a></p>`;
+  return { key: 'week of ' + day0, subject, html, text }; // text key, so Sheets doesn't turn it into a date
+}
+
+function eventHtml_(e) {
+  const tag = KIND[e.kind] || '';
+  const moved = e.moved ? ' <span style="background:#FFE08A;color:#5A4300;border-radius:4px;padding:1px 6px;font-size:12px">Venue change</span>' : '';
+  const bits = [e.time, e.place ? place_(e.place) : ''].filter(Boolean).map(esc_).join(' · ');
+  const divs = e.divs ? `<div style="color:#444;font-size:13px">${e.divs.map(d => esc_(d[1])).join(' · ')}</div>` : '';
+  const note = e.note ? `<div style="color:#444;font-size:13px">${esc_(e.note)}</div>` : '';
+  return `<div style="border-left:4px solid ${COLOR[e.kind] || '#39FF14'};padding:4px 0 4px 10px;margin:8px 0">
+    <div style="font-size:12px;color:#666;text-transform:uppercase;letter-spacing:.04em">${esc_(tag)}${moved}</div>
+    <div style="font-weight:700">${esc_(e.title)}</div><div>${bits}</div>${divs}${note}</div>`;
+}
+
+function eventText_(e) {
+  return `- ${e.title}${e.moved ? ' (VENUE CHANGE)' : ''}\n  ${[e.time, e.place ? place_(e.place) : ''].filter(Boolean).join(' · ')}\n` +
+    (e.divs ? '  ' + e.divs.map(d => d[1]).join(' · ') + '\n' : '') + (e.note ? '  ' + e.note + '\n' : '');
+}
+
+/* ---------- Helpers ---------- */
+
+function fetchEvents_() {
+  if (!FEED_URL) throw new Error('Set FEED_URL at the top of the script.');
+  const res = UrlFetchApp.fetch(FEED_URL, { muteHttpExceptions: true, followRedirects: true });
+  const j = JSON.parse(res.getContentText());
+  if (!j || !Array.isArray(j.events)) throw new Error('Events feed error: ' + (j && j.error || res.getResponseCode()));
+  return j.events.filter(e => e && typeof e.date === 'string' && e.title);
+}
+
+function sheet_() {
+  const id = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+  if (!id) throw new Error('Run setup() first.');
+  return SpreadsheetApp.openById(id).getSheetByName(SHEET);
+}
+
+function webAppUrl_() {
+  const u = WEB_APP_URL || ScriptApp.getService().getUrl();
+  if (!u) throw new Error('Deploy the script as a web app and set WEB_APP_URL.');
+  return u;
+}
+
+function shell_(inner, foot) {
+  return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.45;color:#111;max-width:560px;margin:0 auto">
+    <div style="background:#0B2906;color:#39FF14;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:14px 16px;border-radius:8px 8px 0 0">${CLUB}</div>
+    <div style="padding:8px 16px 16px;border:1px solid #e5e5e5;border-top:0;border-radius:0 0 8px 8px">${inner}</div>
+    ${foot ? `<p style="color:#666;font-size:12px;padding:0 16px">${foot}</p>` : ''}</div>`;
+}
+
+const BTN = 'display:inline-block;background:#39FF14;color:#061D01;font-weight:700;text-decoration:none;padding:10px 18px;border-radius:8px;';
+const COLOR = { league: '#F4FF00', dropin: '#39FF14', special: '#FF5FA2', tourn: '#1E90FF', social: '#FFA500' };
+const place_ = p => String(p).split(',')[0].trim();
+const fmt_ = (d, pattern) => Utilities.formatDate(d, TZ, pattern);
+const dateOf_ = iso => new Date(iso + 'T12:00:00-10:00');
+const addDays_ = (iso, n) => fmt_(new Date(dateOf_(iso).getTime() + n * 864e5), 'yyyy-MM-dd');
+const esc_ = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
