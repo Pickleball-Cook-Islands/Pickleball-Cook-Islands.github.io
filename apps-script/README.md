@@ -54,6 +54,7 @@ Put these tags anywhere in the description:
 | `#social` | Social |
 | `#featured` | Shows it as a big card |
 | `#tbc` | The day isn't confirmed yet: shows just the month. Put the event on any day in that month |
+| `#quiet` | Don't email subscribers about adding, moving or cancelling this event (e.g. a test event). It still shows on the site |
 
 No type tag: titles with "drop-in" in them are drop-ins, everything else is a special event.
 

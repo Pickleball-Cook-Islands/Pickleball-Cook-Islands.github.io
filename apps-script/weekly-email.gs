@@ -206,6 +206,10 @@ function sendWeekly() {
     MailApp.sendEmail(ADMIN_EMAIL || Session.getEffectiveUser().getEmail(),
       'PCI week ahead email: needs attention', problems.join('\n\n'));
   }
+  // Change alerts (change-alerts.gs): subscribers now know this week as it stands.
+  if (typeof rebaselineChanges_ === 'function') {
+    try { rebaselineChanges_(); } catch (err) { Logger.log('Change alerts: ' + err.message); }
+  }
 }
 
 /** Sends this week's email to you (the script owner) only. Doesn't touch the subscriber list. */
@@ -216,6 +220,13 @@ function sendTestToMe() {
 /** Logs this week's email as text, without sending anything. */
 function previewWeek() {
   Logger.log(buildWeek_(new Date()).text);
+}
+
+/** The Monday of the week the email covers: tomorrow on a Sunday, otherwise this week's Monday. */
+function weekMonday_(from) {
+  const today = fmt_(from, 'yyyy-MM-dd');
+  const dow = +fmt_(from, 'u'); // 1 = Monday … 7 = Sunday
+  return addDays_(today, dow === 7 ? 1 : 1 - dow);
 }
 
 function sendWeekTo_(week, email, name, token) {
@@ -237,9 +248,7 @@ function sendWeekTo_(week, email, name, token) {
  * current week, so the week key stays the same and nobody gets it twice.
  */
 function buildWeek_(from) {
-  const today = fmt_(from, 'yyyy-MM-dd');
-  const dow = +fmt_(from, 'u'); // 1 = Monday … 7 = Sunday
-  const monday = addDays_(today, dow === 7 ? 1 : 1 - dow);
+  const monday = weekMonday_(from);
   const days = [];
   for (let i = 0; i < 6; i++) days.push(addDays_(monday, i));
   const endComing = addDays_(days[5], 1 + COMING_UP_DAYS);
@@ -305,14 +314,17 @@ function eventCells_(e, border) {
   const pill = (t, bg) => `<span style="display:inline-block;${H}font-size:11px;letter-spacing:.06em;padding:1px 6px;border-radius:3px;background:${bg};color:${P.dark};vertical-align:1px">${esc_(t)}</span>`;
   const crab = e.kind === 'league' ? `<img src="${SITE_URL}assets/img/crab.png" width="16" height="14" alt="" style="vertical-align:-1px;margin-right:4px;border:0">` : '';
   const when = [e.time, e.place ? place_(e.place) : ''].filter(Boolean).map(esc_).join(' · ');
+  const flag = e.flag ? pill(e.flag[0], e.flag[1]) + ' ' : '';
+  const title = e.struck ? `<s style="color:${P.mute}">${esc_(e.title)}</s>` : esc_(e.title);
+  const was = e.was ? `<div style="font-size:13px;line-height:1.35;color:${P.mute};margin-top:2px">Was ${esc_(e.was)}</div>` : '';
   const extras = (e.moved ? ' ' + pill('Venue change', '#FFFFFF') : '') +
     (e.divs ? ' ' + e.divs.map(d => pill(d[1], DIV[d[0]] || c)).join(' ') : '');
-  const note = e.note && e.kind !== 'dropin'
+  const note = e.note && e.kind !== 'dropin' && !e.flag
     ? `<div style="font-size:13px;line-height:1.35;color:${P.mute};margin-top:2px">${esc_(e.note.length > 110 ? e.note.slice(0, 107).trim() + '…' : e.note)}</div>` : '';
   return `<td width="12" style="${border}padding:10px 0 10px 8px"><div style="width:4px;height:34px;border-radius:2px;background:${c}"></div></td>
     <td style="${border}padding:9px 12px 9px 6px">
       <div style="${H}font-size:14px;letter-spacing:.03em;color:${c};line-height:1.2">${when}</div>
-      <div style="${H}font-size:18px;color:${P.fg};line-height:1.2">${crab}${esc_(e.title)}${extras}</div>${note}</td>`;
+      <div style="${H}font-size:18px;color:${P.fg};line-height:1.2">${flag}${crab}${title}${extras}</div>${was}${note}</td>`;
 }
 
 function eventText_(e) {

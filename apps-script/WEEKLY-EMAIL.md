@@ -66,6 +66,32 @@ A free Gmail account can email about **100 recipients a day** from a script. Con
 - Once 80 people are subscribed, the Sunday run emails a warning. Past about 90, the club needs a bigger option:
   a Google Workspace account (about 1,500 a day) or a newsletter service such as Mailchimp or Buttondown.
 
+## Schedule change emails
+
+[`change-alerts.gs`](change-alerts.gs) emails every confirmed subscriber when this week's schedule changes:
+an upcoming event is **added**, **cancelled** (deleted from the calendar), or **changed** to a different date, time or venue.
+"This week" is the Monday to Saturday the Sunday email covered.
+
+- **When:** the calendar is checked every 15 minutes. The email goes out once there have been no further edits for 30 minutes,
+  so an admin can fix a mistake first, and changes made together go out in one email. Expect it 30–45 minutes after the last edit.
+  An edit that's undone within that time sends nothing.
+- **Not emailed:** changes to later weeks (the next Sunday email covers them), events that have already finished,
+  title or description edits, and events with `#quiet` in the description (handy for test events).
+- **Sundays:** nothing is sent until that morning's week ahead email has gone out, since it already lists the week as it stands.
+- **Gmail's daily limit:** each change email goes to every subscriber, so several in one day use the limit up quickly.
+  If it runs out, the rest are skipped and `ADMIN_EMAIL` gets a warning.
+
+### Turning it on
+
+1. In the "PCI week ahead email" project, click **+** next to Files › Script, name it `change-alerts`, and paste in
+   [`change-alerts.gs`](change-alerts.gs).
+2. Set `CALENDAR_ID` at the top to the shared calendar's ID (the same as in the events feed script).
+3. Click **+** next to Services › **Google Calendar API** › Add.
+4. Pick `setupChangeAlerts` in the toolbar and press Run. Allow access when asked. This starts the 15-minute check and
+   records the week as it is now, so existing events don't count as new.
+
+`previewChanges` logs what would be emailed right now without sending or waiting. `stopChangeAlerts` turns it off.
+
 ## Changing the email
 
 Edit the script, then Deploy › Manage deployments › edit › **New version**. The Sunday timer always uses the latest code;
