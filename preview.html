@@ -195,10 +195,15 @@ h2{font-family:var(--display);font-weight:800;font-size:32px;line-height:1;margi
 .bank .tbc{color:var(--tj);font-weight:600}
 .copy{font:inherit;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;border-radius:8px;border:1px solid var(--acc);background:none;color:var(--acc);cursor:pointer;margin-left:8px}
 .btn.wide{display:block;text-align:center}
-.subcard{display:flex;align-items:center;gap:16px;margin:24px 0 8px;padding:16px 18px;border:2px solid var(--line);border-radius:14px}
-.subcard .txt{flex:1;display:flex;flex-direction:column;gap:4px}.subcard .txt span{color:var(--mute);font-size:14px}
-.subcard .btn{white-space:nowrap}
-@media (max-width:520px){.subcard{flex-direction:column;align-items:stretch}.subcard .btn{text-align:center}}
+.subband{display:flex;align-items:center;gap:14px;margin:16px 0;padding:16px 18px;border-radius:16px;background:var(--acc);color:var(--ink);text-decoration:none;box-shadow:0 6px 24px rgba(57,255,20,.28);transition:transform .15s}
+.subband:hover{transform:translateY(-2px)}
+.subband .ic{flex:0 0 48px;height:48px;border-radius:12px;background:var(--ink);color:var(--acc);display:grid;place-items:center}
+.subband .ic svg{width:28px;height:28px}
+.subband .txt{min-width:0}
+.subband b{display:block;font-family:var(--display);font-weight:800;font-size:25px;line-height:1.02;text-transform:uppercase;letter-spacing:.01em}
+.subband .txt span{display:block;font-size:14px;line-height:1.35;margin-top:3px;opacity:.9}
+.subband .cta{margin-left:auto;flex:0 0 auto;font-family:var(--display);font-weight:800;font-size:19px;letter-spacing:.06em;text-transform:uppercase;padding:11px 20px;border-radius:10px;background:var(--ink);color:var(--acc)}
+@media (max-width:560px){.subband{flex-wrap:wrap}.subband .cta{flex:1 0 100%;text-align:center}}
 .btn.off{background:none;border:2px dashed var(--line);color:var(--mute)}
 .vband{display:flex;align-items:center;gap:14px;border-radius:14px;padding:14px 16px;background:var(--bg2);border:2px solid var(--acc);cursor:pointer;font:inherit;color:var(--fg);text-align:left;width:100%}
 .vband b{display:block;font-family:var(--display);font-weight:800;font-size:22px;text-transform:uppercase;line-height:1.05}
@@ -684,7 +689,7 @@ function viewHome(){
 const champs=[];HOF.forEach(c=>(c.divs||c.cats||[]).forEach(d=>{const p=d.champ;if(p&&p.img&&HOF_IMG[p.img])champs.push({n:p.team,s:c.title.replace("Trader Jack's Pickleball League",'TJPL').replace('Cook Islands Pickleball Open','CI Open')+(d.div?' · Div '+d.div:d.cat?' · '+d.cat:''),img:HOF_IMG[p.img]})}));
 const fees=FEES.map(f=>`<div><span>${esc(f.name)}</span><b>${f.amt}${f.per?`<small> ${f.per}</small>`:''}</b></div>`).join('');
 return `<section class="dhero" aria-label="Next session and club photos">${nextPanel()}${heroCarousel()}</section>
-<div class="lbl">This week</div>${weekStrip()}<button class="seemore" data-go="cal">Full calendar →</button>${SUBSCRIBE_URL?`<a class="seemore" href="${esc(SUBSCRIBE_URL)}" target="_blank" rel="noopener">Get the week ahead by email →</a>`:''}
+<div class="lbl">This week</div>${weekStrip()}<button class="seemore" data-go="cal">Full calendar →</button>${subCard()}
 <section class="dhi" aria-label="Welcome"><div><div class="k">Pickleball in Rarotonga</div><h2>${DROPINS.length} sessions a week. <em>Come play.</em></h2></div><div><p>Drop-ins, the Trader Jack's league and the Cook Islands Open. Members and visitors welcome, paddles and balls provided.</p><div class="dh-b"><button class="btn" data-go="visit">Visiting? Start here</button><button class="btn ghost" data-go="join">Join the club</button></div></div></section>
 <div class="dgrid"><div class="dcol"><div class="lbl">Club news</div>${NEWS.slice(0,2).map(newsCard).join('')}<button class="seemore" data-go="news">All news →</button></div><div class="dcol"><div class="lbl">Competitions</div>${linkCards()}</div><div class="dcol"><div class="lbl">Membership</div><div class="dfees">${fees}<button class="btn" data-go="join">Become a member</button></div></div></div>
 <div class="lbl">Hall of Fame · Latest champions</div><div class="dhof">${champs.slice(0,4).map(c=>`<div><img src="${c.img}" alt="" loading="lazy"><b>${esc(c.n)}</b><span>${esc(c.s)}</span></div>`).join('')}</div><button class="seemore" data-go="hof">See every winner →</button>
@@ -692,15 +697,15 @@ return `<section class="dhero" aria-label="Next session and club photos">${nextP
 let filt='all';
 function viewCal(){
   const up=upcoming().filter(e=>filt==='all'||e.kind===filt||(filt==='dropin'&&e.kind==='special'));
-  let h=`<h2>What's on</h2><div class="filters">${[['all','All'],['dropin','Drop-ins'],['league','League'],['tourn','Tournaments']].map(([k,t])=>`<button data-f="${k}" class="${filt===k?'on':''}">${t}</button>`).join('')}</div>`;
+  let h=`<h2>What's on</h2>${subCard()}<div class="filters">${[['all','All'],['dropin','Drop-ins'],['league','League'],['tourn','Tournaments']].map(([k,t])=>`<button data-f="${k}" class="${filt===k?'on':''}">${t}</button>`).join('')}</div>`;
   let last='';
   for(const e of up){const d=parse(e.date);const m=d?MONTHS[d.getMonth()]+' '+d.getFullYear():MONTHS[+e.date.split('-')[1]-1]+' '+e.date.split('-')[0];
     if(m!==last){h+=`<div class="month">${m}</div>`;last=m}
     h+=evCard(e)}
   if(!up.length)h+=`<p class="note">${calState==='ok'?'Nothing scheduled in this category yet.':CAL_MSG()}</p>`;
   h+=`<p class="note">Times are Rarotonga time. Drop-in sessions are for PCI members. New events are added here as they're confirmed.</p>`;
-  return h+subCard()}
-function subCard(){return SUBSCRIBE_URL?`<div class="subcard"><div class="txt"><b>Get the week ahead by email</b><span>Every Sunday morning: the week's drop-ins, league days and events. Unsubscribe any time.</span></div><a class="btn" href="${esc(SUBSCRIBE_URL)}" target="_blank" rel="noopener">Sign up</a></div>`:''}
+  return h}
+function subCard(){return SUBSCRIBE_URL?`<a class="subband" href="${esc(SUBSCRIBE_URL)}" target="_blank" rel="noopener"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/></svg></span><span class="txt"><b>Get the week ahead by email</b><span>Every Sunday morning: the week's drop-ins, league days and events. Free, unsubscribe any time.</span></span><span class="cta">Sign up</span></a>`:''}
 
 function viewNews(){return `<h2>Club news</h2>${NEWS.map(newsCard).join('')}<a class="lk fb" href="${FB}" target="_blank" rel="noopener"><div class="ic">f</div><div class="txt"><b>More on Facebook</b><span>Pickleball Cook Islands</span></div><div class="go">→</div></a>`}
 
