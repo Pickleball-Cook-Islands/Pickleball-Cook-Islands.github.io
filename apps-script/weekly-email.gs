@@ -319,7 +319,7 @@ function eventCells_(e, border) {
   const was = e.was ? `<div style="font-size:13px;line-height:1.35;color:${P.mute};margin-top:2px">Was ${esc_(e.was)}</div>` : '';
   const extras = (e.moved ? ' ' + pill('Venue change', '#FFFFFF') : '') +
     (e.divs ? ' ' + e.divs.map(d => pill(d[1], DIV[d[0]] || c)).join(' ') : '');
-  const note = e.note && e.kind !== 'dropin' && !e.flag
+  const note = e.note && (e.showNote || e.kind !== 'dropin' && !e.flag)
     ? `<div style="font-size:13px;line-height:1.35;color:${P.mute};margin-top:2px">${esc_(e.note.length > 110 ? e.note.slice(0, 107).trim() + '…' : e.note)}</div>` : '';
   return `<td width="12" style="${border}padding:10px 0 10px 8px"><div style="width:4px;height:34px;border-radius:2px;background:${c}"></div></td>
     <td style="${border}padding:9px 12px 9px 6px">

@@ -4,12 +4,14 @@
  * Add this as a second file in the "PCI week ahead email" Apps Script project
  * (it uses the subscriber list, email design and helpers in weekly-email.gs).
  *
- * Every 15 minutes it compares the calendar's current week (Monday to Saturday,
+ * Every 5 minutes it compares the calendar's current week (Monday to Saturday,
  * the week the Sunday email covered) with what subscribers were last told. When
  * an upcoming event this week is added, cancelled, or moved to a different date,
  * time or venue, it emails every confirmed subscriber, once the calendar has had
  * no new edits for 30 minutes. That gives admins time to fix mistakes, and several
- * changes made together go out as one email.
+ * changes made together go out as one email. Changes to TODAY's sessions (a
+ * last-minute session, a same-day cancellation) only wait 10 minutes, and the
+ * subject starts with "TODAY:" so people notice it.
  *
  * Not emailed: changes to events in later weeks (the Sunday email covers those),
  * events that have already finished, title or description edits, and events
@@ -22,10 +24,11 @@
 // The shared calendar's ID (the same as CALENDAR_ID in events-feed.gs).
 const CALENDAR_ID = '';
 
-const CHECK_EVERY_MINUTES = 15; // how often the calendar is checked (Apps Script allows 1, 5, 10, 15 or 30)
-const SETTLE_MINUTES = 30;      // wait this long after the last edit before emailing
+const CHECK_EVERY_MINUTES = 5;   // how often the calendar is checked (Apps Script allows 1, 5, 10, 15 or 30)
+const SETTLE_MINUTES = 30;       // wait this long after the last edit before emailing
+const TODAY_SETTLE_MINUTES = 10; // shorter wait when a change affects today's sessions
 
-/** Run once from the editor: starts the 15-minute check and records the calendar as it is now. */
+/** Run once from the editor (and again after changing CHECK_EVERY_MINUTES): starts the check and records the calendar as it is now. */
 function setupChangeAlerts() {
   if (!CALENDAR_ID) throw new Error('Set CALENDAR_ID at the top of change-alerts.gs.');
   ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'checkChanges')
@@ -35,7 +38,7 @@ function setupChangeAlerts() {
   Logger.log('Change alerts on. The calendar is checked every %s minutes.', CHECK_EVERY_MINUTES);
 }
 
-/** Stops change alerts (removes the 15-minute check). */
+/** Stops change alerts (removes the regular check). */
 function stopChangeAlerts() {
   ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'checkChanges')
     .forEach(t => ScriptApp.deleteTrigger(t));
@@ -49,7 +52,7 @@ function previewChanges() {
   const win = changeWindow_(new Date());
   if (!base || base.key !== win.key) return Logger.log('No saved state for this week yet. Run setupChangeAlerts().');
   const changes = diffChanges_(base.ev, snapshot_(win), new Date());
-  Logger.log(changes.length ? changesText_(changes) : 'No changes to email.');
+  Logger.log(changes.length ? changesText_(changes, fmt_(new Date(), 'yyyy-MM-dd')) : 'No changes to email.');
 }
 
 /**
@@ -93,7 +96,7 @@ function sendChangesNow() {
   } finally { lock.releaseLock(); }
 }
 
-/** Time trigger, every 15 minutes. */
+/** Time trigger, every CHECK_EVERY_MINUTES. */
 function checkChanges() {
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(5000)) return;
@@ -122,7 +125,9 @@ function checkChanges() {
       props.setProperty('CHG_PENDING', JSON.stringify({ hash, since: lastEdit || now.getTime() }));
       return;
     }
-    if (now.getTime() - pending.since < SETTLE_MINUTES * 60000) return;
+    const today = fmt_(now, 'yyyy-MM-dd');
+    const settle = changes.some(c => isToday_(c, today)) ? TODAY_SETTLE_MINUTES : SETTLE_MINUTES;
+    if (now.getTime() - pending.since < settle * 60000) return;
 
     sendChanges_(changes, win);
     saveBase_(win.key, cur);
@@ -218,6 +223,11 @@ function diffChanges_(was, now, at) {
   return out.sort((a, b) => (a.now || a.was).s.localeCompare((b.now || b.was).s) || ord[a.type] - ord[b.type]);
 }
 
+/** True when a change touches today: the session is today, or was today before it moved. */
+function isToday_(c, today) {
+  return (c.now && c.now.date === today) || (c.was && c.was.date === today);
+}
+
 function saveBase_(key, ev) {
   const props = PropertiesService.getScriptProperties();
   props.setProperty('CHG_BASE', JSON.stringify({ key, ev }));
@@ -256,7 +266,7 @@ function sendChangesTo_(mail, email, name, token) {
     to: email, name: CLUB, subject: mail.subject,
     body: (name ? `Kia orana ${name},` : 'Kia orana,') + '\n\n' + mail.text + '\n\nWebsite: ' + SITE_URL + (unsub ? '\nUnsubscribe: ' + unsub : ''),
     htmlBody: shell_({ title: 'Schedule update', sub: mail.range, preheader: mail.preheader,
-      hi: `Kia orana${name ? ' ' + esc_(name) : ''}! ${mail.count > 1 ? 'There are changes' : "There's a change"} to this week's schedule.`, inner: mail.html, foot })
+      hi: `Kia orana${name ? ' ' + esc_(name) : ''}! ${mail.hi}`, inner: mail.html, foot })
   });
 }
 
@@ -267,15 +277,30 @@ function buildChanges_(changes, win) {
   const range = `This week: ${short(win.monday)} – ${short(addDays_(win.monday, 5))}`;
   const one = changes.length === 1 ? changes[0] : null;
   const what = c => `${short((c.now || c.was).date)} ${(c.now || c.was).title}`;
-  const subject = one
-    ? `PCI update: ${what(one)} ${one.type === 'cancelled' ? 'cancelled' : one.type === 'added' ? 'added' : 'changed'}`
-    : `PCI update: ${changes.length} changes this week`;
+  const today = fmt_(new Date(), 'yyyy-MM-dd');
+  const todays = changes.filter(c => isToday_(c, today)).length;
+  const at = e => [(e.time || '').split(' – ')[0], e.place ? 'at ' + place_(e.place) : ''].filter(Boolean).join(' ');
+  let subject;
+  if (one && todays) {
+    const e = one.now || one.was;
+    subject = one.type === 'cancelled' ? `TODAY: ${e.title} cancelled`
+      : one.type === 'added' ? `TODAY: ${e.title}, ${at(e)}`
+      : e.date === today ? `TODAY: ${e.title} now ${at(e)}`
+      : `TODAY: ${e.title} moved to ${short(e.date)}, ${at(e)}`;
+  } else if (one) {
+    subject = `PCI update: ${what(one)} ${one.type === 'cancelled' ? 'cancelled' : one.type === 'added' ? 'added' : 'changed'}`;
+  } else if (todays === changes.length) {
+    subject = `TODAY: ${changes.length} schedule changes`;
+  } else {
+    subject = `PCI update: ${changes.length} changes this week` + (todays ? ', including today' : '');
+  }
 
   let rows = '';
   changes.forEach((c, i) => {
     const e = Object.assign({}, c.now || c.was);
     e.flag = CHANGE_FLAG[c.type];
     if (c.type === 'cancelled') e.struck = 1;
+    if (c.type === 'added') e.showNote = 1; // e.g. "4 courts, sharing with Tereora College"
     if (c.type === 'moved') {
       const o = c.was;
       e.was = (o.date !== e.date ? short(o.date) + ', ' : '') + [o.time, o.place ? place_(o.place) : ''].filter(Boolean).join(' · ');
@@ -283,21 +308,24 @@ function buildChanges_(changes, win) {
     const top = i ? `border-top:1px solid ${P.line};` : '';
     const d = dateOf_(e.date);
     rows += `<tr><td width="52" valign="top" style="${top}padding:10px 0 10px 12px">
-        <div style="${H}font-size:12px;letter-spacing:.12em;color:${P.mute};line-height:1">${fmt_(d, 'EEE')}</div>
+        <div style="${H}font-size:12px;letter-spacing:.12em;color:${e.date === today ? P.acc : P.mute};line-height:1">${e.date === today ? 'TODAY' : fmt_(d, 'EEE')}</div>
         <div style="${H}font-size:26px;color:${P.fg};line-height:1">${fmt_(d, 'd')}</div></td>${eventCells_(e, top)}</tr>`;
   });
   const html = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${P.card};border-radius:12px;border-collapse:separate">${rows}</table>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px"><tr><td align="right">
     <a href="${SITE_URL}#cal" style="display:inline-block;background:${P.acc};border-radius:8px;padding:8px 14px;${H}font-size:15px;letter-spacing:.05em;color:${P.ink};text-decoration:none">Full calendar</a></td></tr></table>`;
   const preheader = changes.map(c => `${CHANGE_FLAG[c.type][0]}: ${what(c)}`).join(' · ');
-  return { subject, range, preheader, html, count: changes.length, text: changesText_(changes) };
+  const hi = todays === changes.length ? (changes.length > 1 ? 'There are changes' : "There's a change") + " to today's schedule."
+    : (changes.length > 1 ? 'There are changes' : "There's a change") + " to this week's schedule" + (todays ? ', including today.' : '.');
+  return { subject, range, preheader, html, hi, count: changes.length, text: changesText_(changes, today) };
 }
 
-function changesText_(changes) {
-  const short = d => fmt_(dateOf_(d), 'EEE d MMM');
+function changesText_(changes, today) {
+  const short = d => (d === today ? 'TODAY ' : '') + fmt_(dateOf_(d), 'EEE d MMM');
   return "Changes to this week's schedule:\n\n" + changes.map(c => {
     const e = c.now || c.was;
     let s = `${CHANGE_FLAG[c.type][0].toUpperCase()}: ${short(e.date)} · ${e.title}\n  ${[e.time, e.place ? place_(e.place) : ''].filter(Boolean).join(' · ')}`;
+    if (e.note && c.type !== 'cancelled') s += `\n  ${e.note}`;
     if (c.type === 'moved') s += `\n  Was: ${c.was.date !== e.date ? short(c.was.date) + ', ' : ''}${[c.was.time, c.was.place ? place_(c.was.place) : ''].filter(Boolean).join(' · ')}`;
     return s;
   }).join('\n\n');

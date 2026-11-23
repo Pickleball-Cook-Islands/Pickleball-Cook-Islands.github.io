@@ -72,9 +72,13 @@ A free Gmail account can email about **100 recipients a day** from a script. Con
 an upcoming event is **added**, **cancelled** (deleted from the calendar), or **changed** to a different date, time or venue.
 "This week" is the Monday to Saturday the Sunday email covered.
 
-- **When:** the calendar is checked every 15 minutes. The email goes out once there have been no further edits for 30 minutes,
-  so an admin can fix a mistake first, and changes made together go out in one email. Expect it 30–45 minutes after the last edit.
+- **When:** the calendar is checked every 5 minutes. The email goes out once there have been no further edits for 30 minutes,
+  so an admin can fix a mistake first, and changes made together go out in one email. Expect it 30–35 minutes after the last edit.
   An edit that's undone within that time sends nothing.
+- **Same-day changes** (a last-minute session, a session cancelled on the day) only wait **10 minutes**, so expect the email
+  10–15 minutes after the last edit. The subject starts with **TODAY**, for example
+  "TODAY: Members Drop-in Session, 11:00am at TSA", and the email shows any note from the description
+  (such as "4 courts, sharing with Tereora College"). Get the details right before saving, since there's less time to fix them.
 - **Not emailed:** changes to later weeks (the next Sunday email covers them), events that have already finished,
   title or description edits, and events with `#quiet` in the description (handy for test events).
 - **Sundays:** nothing is sent until that morning's week ahead email has gone out, since it already lists the week as it stands.
@@ -87,7 +91,7 @@ an upcoming event is **added**, **cancelled** (deleted from the calendar), or **
    [`change-alerts.gs`](change-alerts.gs).
 2. Set `CALENDAR_ID` at the top to the shared calendar's ID (the same as in the events feed script).
 3. Click **+** next to Services › **Google Calendar API** › Add.
-4. Pick `setupChangeAlerts` in the toolbar and press Run. Allow access when asked. This starts the 15-minute check and
+4. Pick `setupChangeAlerts` in the toolbar and press Run. Allow access when asked. This starts the 5-minute check and
    records the week as it is now, so existing events don't count as new.
 
 Other functions to run from the editor (open `change-alerts` first, so they show in the function menu):
@@ -98,6 +102,9 @@ Other functions to run from the editor (open `change-alerts` first, so they show
 | `sendChangesNow` | Sends this week's real changes to every subscriber now, skipping the 30-minute wait |
 | `previewChanges` | Logs what would be emailed right now, without sending |
 | `stopChangeAlerts` | Turns change emails off |
+
+To change the waits, edit `SETTLE_MINUTES` or `TODAY_SETTLE_MINUTES` at the top of `change-alerts`; the next check uses them.
+If you change `CHECK_EVERY_MINUTES`, run `setupChangeAlerts` again.
 
 ## Changing the email
 
