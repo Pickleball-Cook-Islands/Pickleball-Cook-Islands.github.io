@@ -9,7 +9,7 @@
   },
   "theme": {"accent": "#39FF14", "glow": "#1c6b30", "hero": "#F4FF00"},
   "images": {"appIcon": "images/app-icon.png", "header": "images/header-default.png", "logo": "images/logo-default.png", "ball": "images/ball-default.png"},
-  "links": {"facebook": "https://www.facebook.com/pickleballcookislands", "subsForm": "https://docs.google.com/forms/d/e/1FAIpQLScfGt1HLQqbB_k-mLtIc3v_syFAZ4vm-O_pwDcAGFuPbAbNag/viewform?usp=header", "subsSheet": ""},
+  "links": {"facebook": "https://www.facebook.com/profile.php?id=61572906476405", "subsForm": "https://docs.google.com/forms/d/e/1FAIpQLScfGt1HLQqbB_k-mLtIc3v_syFAZ4vm-O_pwDcAGFuPbAbNag/viewform?usp=header", "subsSheet": ""},
   "divisions": {
     "1": {"name": "DIVISION 1", "short": "DIV 1", "color": "#F4FF00", "glow": "#5a6000", "teams": ["Dis iz ur cap dinkin", "Jammin", "Franks & Beans", "2inthepink1inthedink", "Crush & Grab", "The Dream Team 2.0"]},
     "2": {"name": "DIVISION 2", "short": "DIV 2", "color": "#FF7A00", "glow": "#7a3a00", "images": {"header": "images/header-div2.png", "logo": "images/logo-div2.png", "ball": "images/ball-div2.png"}, "teams": ["Drop, Dink & Spin", "Dink around&find out", "ASC", "Pickled Black", "TINAS TURNERS", "Miss Hits"]},
