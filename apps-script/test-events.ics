@@ -143,7 +143,7 @@ DTSTART;TZID=Pacific/Rarotonga:20261219T100000
 DTEND;TZID=Pacific/Rarotonga:20261219T120000
 SUMMARY:[TEST] Committee Open Day
 LOCATION:TSA
-DESCRIPTION:No tag on this one\, so the site should show it as a special ev
- ent.
+DESCRIPTION:No tag on this one\, so it's private: it should NOT show on the s
+ ite or in emails.
 END:VEVENT
 END:VCALENDAR

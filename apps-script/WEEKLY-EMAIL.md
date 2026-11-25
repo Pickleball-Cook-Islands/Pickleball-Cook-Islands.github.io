@@ -80,7 +80,8 @@ an upcoming event is **added**, **cancelled** (deleted from the calendar), or **
   "TODAY: Members Drop-in Session, 11:00am at TSA", and the email shows any note from the description
   (such as "4 courts, sharing with Tereora College"). Get the details right before saving, since there's less time to fix them.
 - **Not emailed:** changes to later weeks (the next Sunday email covers them), events that have already finished,
-  title or description edits, and events with `#quiet` in the description (handy for test events).
+  title or description edits, events with `#quiet` in the description (handy for test events), and private events
+  (no type tag, so not on the site either). Adding a type tag counts as adding the event; removing it counts as cancelling it.
 - **Sundays:** nothing is sent until that morning's week ahead email has gone out, since it already lists the week as it stands.
 - **Gmail's daily limit:** each change email goes to every subscriber, so several in one day use the limit up quickly.
   If it runs out, the rest are skipped and `ADMIN_EMAIL` gets a warning.

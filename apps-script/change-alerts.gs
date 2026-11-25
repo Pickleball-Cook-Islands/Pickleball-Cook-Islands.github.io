@@ -14,8 +14,9 @@
  * subject starts with "TODAY:" so people notice it.
  *
  * Not emailed: changes to events in later weeks (the Sunday email covers those),
- * events that have already finished, title or description edits, and events
- * with #quiet in their description.
+ * events that have already finished, title or description edits, events with
+ * #quiet in their description, and private events (no type tag, so not on the site).
+ * Adding a type tag to an event counts as adding it; removing it counts as cancelling it.
  *
  * Needs the Google Calendar API advanced service: in the editor, Services (+) ›
  * Google Calendar API › Add. Then run setupChangeAlerts() once.
@@ -163,13 +164,16 @@ function snapshot_(win) {
       timeMin: win.min.toISOString(), timeMax: win.max.toISOString(),
       singleEvents: true, maxResults: 250, pageToken
     });
-    (res.items || []).forEach(ev => { if (ev.status !== 'cancelled') out[ev.id] = apiItem_(ev); });
+    (res.items || []).forEach(ev => {
+      const item = ev.status !== 'cancelled' && apiItem_(ev);
+      if (item) out[ev.id] = item; // private events (no type tag) aren't tracked
+    });
     pageToken = res.nextPageToken;
   } while (pageToken);
   return out;
 }
 
-/** A calendar API event in the same shape as the events feed, plus what's needed to spot changes. */
+/** A calendar API event in the same shape as the events feed, plus what's needed to spot changes. Null if private (no type tag). */
 function apiItem_(ev) {
   const title = String(ev.summary || '').trim() || 'Untitled event';
   const tags = {}, divs = [], note = [];
@@ -184,7 +188,8 @@ function apiItem_(ev) {
       else note.push(line);
     });
   const KINDS = { league: 'league', dropin: 'dropin', 'drop-in': 'dropin', special: 'special', tournament: 'tourn', tourn: 'tourn', social: 'social' };
-  const kind = Object.keys(tags).map(t => KINDS[t]).filter(Boolean)[0] || (/drop.?in/i.test(title) ? 'dropin' : 'special');
+  const kind = Object.keys(tags).map(t => KINDS[t]).filter(Boolean)[0];
+  if (!kind) return null;
 
   const allDay = !!ev.start.date;
   const start = allDay ? new Date(ev.start.date + 'T00:00:00-10:00') : new Date(ev.start.dateTime);

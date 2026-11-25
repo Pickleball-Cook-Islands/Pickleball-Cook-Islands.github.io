@@ -15,8 +15,9 @@
  *   #tbc                                           day not confirmed: show the month only
  *   Div 1 · 1pm (one line per division)            division chips on league days
  * Everything else in the description becomes the note on the event card.
- * Events with no type tag are drop-ins if the title says "drop-in", otherwise
- * special events.
+ * Events with no type tag are private: they're left out of the feed completely,
+ * so the same calendar can hold admin-only events (committee meetings, court
+ * bookings) without them showing on the site or in emails.
  */
 
 // The calendar's ID: Google Calendar > Settings for the calendar > Integrate calendar > Calendar ID.
@@ -62,6 +63,7 @@ function buildFeed() {
   const out = [];
   cal.getEvents(start, end).forEach(ev => {
     const item = toItem(ev);
+    if (!item) return; // private: no type tag
     if (item.kind === 'dropin' && ev.getStartTime() > dropinEnd) return;
     if (ev.isRecurringEvent() && item.place) {
       const id = ev.getId();
@@ -77,6 +79,7 @@ function buildFeed() {
   return { updated: new Date().toISOString(), tz: TZ, events: out };
 }
 
+/** An event as the site shows it, or null if it's private (no type tag). */
 function toItem(ev) {
   const title = ev.getTitle().trim();
   const lines = cleanDescription(ev.getDescription()).split('\n');
@@ -91,8 +94,8 @@ function toItem(ev) {
     else note.push(line);
   });
 
-  let kind = Object.keys(tags).map(t => KINDS[t]).filter(Boolean)[0];
-  if (!kind) kind = /drop.?in/i.test(title) ? 'dropin' : 'special';
+  const kind = Object.keys(tags).map(t => KINDS[t]).filter(Boolean)[0];
+  if (!kind) return null;
 
   const item = { kind, title };
   if (ev.isAllDayEvent()) {

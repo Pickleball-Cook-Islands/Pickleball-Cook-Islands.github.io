@@ -34,7 +34,8 @@ anyone see the rest of your Google account or change the calendar.
 
 ## Adding events (admins)
 
-Add events to the **PCI Events** calendar as normal: title, date, time and location. The site shows:
+Add events to the **PCI Events** calendar as normal: title, date, time and location, plus a type tag in the
+description (see below) for anything the public should see. The site shows:
 
 | In Google Calendar | On the site |
 |---|---|
@@ -56,7 +57,13 @@ Put these tags anywhere in the description:
 | `#tbc` | The day isn't confirmed yet: shows just the month. Put the event on any day in that month |
 | `#quiet` | Don't email subscribers about adding, moving or cancelling this event (e.g. a test event). It still shows on the site |
 
-No type tag: titles with "drop-in" in them are drop-ins, everything else is a special event.
+**Every public event needs one type tag** (`#league`, `#dropin`, `#special`, `#tournament` or `#social`).
+An event without one is **private**: it stays in the calendar for admins but never shows on the site or in emails.
+Use that for committee meetings, court bookings and anything else that isn't for the public.
+`#featured`, `#tbc` and `#quiet` on their own don't make an event public.
+
+Adding a type tag to an existing event this week emails subscribers that it's been added; removing it emails them that it's cancelled
+(add `#quiet` as well to avoid either).
 
 On league days, put each division on its own line in the description, starting with "Div", for example:
 
@@ -69,7 +76,7 @@ Div 3 · 3pm
 
 ### Regular drop-ins
 
-Create each weekly drop-in once as a repeating event (Repeat › Weekly). The site shows the next 4 weeks.
+Create each weekly drop-in once as a repeating event (Repeat › Weekly) with `#dropin` in the description. The site shows the next 4 weeks.
 
 - **Moving one session:** open that day's session, change the location, save › **This event**. The site marks it "Venue change".
 - **Cancelling one session:** delete that day's session › **This event**.
