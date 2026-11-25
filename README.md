@@ -70,7 +70,7 @@ Keep the commas and quote marks exactly as they are. If the page shows "Could no
 ## Security
 
 - **Content security policy.** Each page has a `Content-Security-Policy` meta tag near the top. It only lets the page load scripts and images from this site, fonts from Google Fonts, and data from the Apps Script feed and email scripts. If you add something from another site (an embedded map or video, an image hosted elsewhere, a new script URL), add that site to the policy on that page, or the browser will block it. Check the browser console for "Content Security Policy" errors.
-- **Links and images in content** must be `https://` links or files in this repository. Anything else (for example `javascript:` links) is dropped.
+- **Links and images in content** must be web links (`https://`) or, on the main page, files in this repository. In a `league.json`, only web links work. Anything else (for example `javascript:` links) is dropped.
 - **Apps Script web apps** run as the club account. Never add an HtmlService page to the week ahead email project (see [apps-script/WEEKLY-EMAIL.md](apps-script/WEEKLY-EMAIL.md)).
 - `main` is the live site: anything merged there is public within minutes.
 

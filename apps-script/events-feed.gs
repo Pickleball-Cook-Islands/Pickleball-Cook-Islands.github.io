@@ -36,7 +36,8 @@ const KINDS = {
 
 // The feed is public, so every request is served from the cache: nobody can make each request
 // read the calendar and use up the account's daily Apps Script quota. To see changes straight
-// away, run testFeed() in the editor. Errors are logged here, not shown to visitors.
+// away, run testFeed() in the editor. Errors are logged here, not shown to visitors, and cached
+// for a minute.
 function doGet() {
   const cache = CacheService.getScriptCache();
   let body = cache.get('events');
@@ -47,6 +48,8 @@ function doGet() {
     } catch (err) {
       console.error('Events feed: ' + (err && err.stack || err));
       body = JSON.stringify({ error: 'The events feed is unavailable right now.' });
+      // Cache the error briefly too, so a calendar outage doesn't make every request retry it.
+      cache.put('events', body, 60);
     }
   }
   return ContentService.createTextOutput(body).setMimeType(ContentService.MimeType.JSON);
