@@ -394,7 +394,7 @@ const COLOR = { dropin: '#39FF14', league: '#F2DA1A', special: '#FA00BE', tourn:
 const DIV = { 1: '#F4FF00', 2: '#FF7A00', 3: '#FF2B2B' };
 const H = "font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-weight:800;text-transform:uppercase;";
 const BODY = "'Barlow',Arial,Helvetica,sans-serif";
-const FB_URL = 'https://www.facebook.com/pickleballcookislands';
+const FB_URL = 'https://www.facebook.com/profile.php?id=61572906476405';
 const place_ = p => String(p).split(',')[0].trim();
 const fmt_ = (d, pattern) => Utilities.formatDate(d, TZ, pattern);
 const dateOf_ = iso => new Date(iso + 'T12:00:00-10:00');
