@@ -31,6 +31,7 @@ Then open http://localhost:8000/preview.html in a browser (http://localhost:8000
 |---|---|---|
 | `index.html` | The "coming soon" page, until launch | At launch (see [Going live](#going-live)) |
 | `preview.html` | The club site: page, styles and script (becomes `index.html` at launch) | Edit the content block at the top of the script (between `EDIT CONTENT HERE` and `END CONTENT`) for events (until the Google Calendar feed is switched on), news, fees, venues, the list of leagues and the homepage photo carousel (`HERO_PHOTOS`) |
+| `email.html` | Week ahead email: the sign-up form, and the page confirm and unsubscribe links open ([apps-script/WEEKLY-EMAIL.md](apps-script/WEEKLY-EMAIL.md)) | Rarely |
 | `apps-script/` | Google Apps Scripts: the events feed from the club's Google Calendar ([apps-script/README.md](apps-script/README.md)) and the Sunday week ahead email ([apps-script/WEEKLY-EMAIL.md](apps-script/WEEKLY-EMAIL.md)) | Rarely; admins use Google Calendar |
 | `assets/img/` | Logo and artwork, `hof/` Hall of Fame photos | Rarely |
 | `assets/img/photos/` | `hero/`: homepage carousel (`hero/spare/` holds unused ones to swap in); one folder per album (`club-days/`, `world-cup-2026/`) | When adding photos |

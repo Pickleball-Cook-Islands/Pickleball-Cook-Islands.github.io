@@ -1,15 +1,15 @@
 /**
  * Pickleball Cook Islands: "week ahead" email.
  *
- * Visitors sign up with a Google Form, confirm by email, then get an email
+ * Visitors sign up on the website (email.html), confirm by email, then get an email
  * every Sunday morning listing the week's sessions and events. The events come
  * from the same calendar feed the website uses (events-feed.gs), so the email
  * always matches the site.
  *
  * Setup is in apps-script/WEEKLY-EMAIL.md. In short: new Apps Script project in
  * the club account, paste this file, set FEED_URL and SITE_URL, run setup(),
- * deploy as a web app (Execute as: Me, Who has access: Anyone), paste the
- * /exec URL into WEB_APP_URL, deploy a new version.
+ * deploy as a web app (Execute as: Me, Who has access: Anyone), and put the
+ * /exec URL in WEB_APP_URL in email.html on the website.
  *
  * Free Gmail accounts can email about 100 recipients a day from a script.
  * sendWeekly() stops before the limit and emails ADMIN_EMAIL a warning.
@@ -17,9 +17,9 @@
 
 // The events feed's /exec URL (the same as CAL_FEED_URL in preview.html).
 const FEED_URL = 'https://script.google.com/macros/s/AKfycbyZUnUIvZzfO74bNgzacGXwDpkucXIn9DxVYVYzQZkncesPgE4IXhdwp75ZJErEiIE/exec';
-// This script's own web app URL (ends in /exec). Fill in after the first deployment.
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxyykIm_4DX_JejIfnDOUh8earpWkGJr0HMsQfQRPqSY-Uc3Tv1N58wFo7WkW8L4CDH/exec';
-const SITE_URL = 'https://pickleball-cook-islands.github.io/';
+// This script's own web app URL (ends in /exec) goes in WEB_APP_URL in email.html on the website,
+// which sends confirm / unsubscribe requests here. The script itself doesn't need it.
+const SITE_URL = 'https://pickleballcookislands.com/';
 // Who gets warnings (quota, errors). '' = the account that owns the script.
 const ADMIN_EMAIL = '';
 
@@ -41,50 +41,36 @@ const KIND = {
 
 /* ---------- One-time setup ---------- */
 
-/** Run once from the editor. Creates the form, the subscribers sheet and the triggers. */
+/** Run once from the editor. Creates the subscribers sheet and the Sunday trigger. */
 function setup() {
   const props = PropertiesService.getScriptProperties();
-  if (props.getProperty('FORM_ID')) {
-    Logger.log('Already set up. Form: ' + FormApp.openById(props.getProperty('FORM_ID')).getPublishedUrl());
+  if (props.getProperty('SHEET_ID')) {
+    Logger.log('Already set up. Subscribers sheet: ' + SpreadsheetApp.openById(props.getProperty('SHEET_ID')).getUrl());
     return;
   }
   const ss = SpreadsheetApp.create(CLUB + ' – Week ahead subscribers');
-  const form = FormApp.create(CLUB + ' – Week ahead emails')
-    .setDescription("Get an email every Sunday morning with the week's drop-ins, league days and events. " +
-      "We'll send you a link to confirm first. Every email has a one-click unsubscribe link. " +
-      'We only use your email address for these emails.')
-    .setConfirmationMessage("Thanks! Check your inbox (and spam folder) for an email to confirm your subscription.")
-    .setCollectEmail(false)
-    .setAllowResponseEdits(false)
-    .setShowLinkToRespondAgain(false);
-  form.addTextItem().setTitle('Email address').setRequired(true)
-    .setValidation(FormApp.createTextValidation().setHelpText('Enter a valid email address').requireTextIsEmail().build());
-  form.addTextItem().setTitle('First name').setRequired(false);
-  form.setDestination(FormApp.DestinationType.SPREADSHEET, ss.getId());
-
-  const sh = ss.insertSheet(SHEET, 0);
+  const sh = ss.getSheets()[0].setName(SHEET);
   sh.appendRow(COLS);
   sh.setFrozenRows(1);
   sh.getRange(1, 1, 1, COLS.length).setFontWeight('bold');
 
-  props.setProperties({ FORM_ID: form.getId(), SHEET_ID: ss.getId() });
-  ScriptApp.newTrigger('onSignup').forForm(form).onFormSubmit().create();
+  props.setProperty('SHEET_ID', ss.getId());
   ScriptApp.newTrigger('sendWeekly').timeBased().onWeekDay(ScriptApp.WeekDay.SUNDAY)
     .atHour(SEND_HOUR).inTimezone(TZ).create();
 
-  Logger.log('Form (share this link): ' + form.getPublishedUrl());
   Logger.log('Subscribers sheet: ' + ss.getUrl());
 }
 
 /* ---------- Sign-up and confirm / unsubscribe ---------- */
 
-/** Form trigger: add or update the subscriber and send the confirmation email. */
-function onSignup(e) {
-  const answers = {};
-  e.response.getItemResponses().forEach(r => { answers[r.getItem().getTitle()] = String(r.getResponse() || '').trim(); });
-  const email = (answers['Email address'] || '').toLowerCase();
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return;
-  const name = answers['First name'] || '';
+/**
+ * A sign-up from the website: add or update the subscriber and send the confirmation email.
+ * Returns 'invalid', 'already' (confirmed already: nothing sent), 'limit' (daily cap reached) or 'sent'.
+ */
+function signup_(rawEmail, rawName) {
+  const email = String(rawEmail || '').trim().toLowerCase().slice(0, 254);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return 'invalid';
+  const name = String(rawName || '').trim().replace(/\s+/g, ' ').slice(0, 60);
 
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   let row, token;
@@ -93,11 +79,11 @@ function onSignup(e) {
     const data = sh.getDataRange().getValues();
     const i = data.findIndex((r, k) => k > 0 && String(r[C.Email]).toLowerCase() === email);
     if (i > 0 && data[i][C.Status] === 'confirmed') {
-      if (name) sh.getRange(i + 1, C.Name + 1).setValue(name);
-      return; // already subscribed: nothing to send
+      if (name) sh.getRange(i + 1, C.Name + 1).setValue(cell_(name));
+      return 'already'; // nothing to send
     }
     token = Utilities.getUuid();
-    row = [email, name, 'pending', token, new Date(), '', '', ''];
+    row = [cell_(email), cell_(name), 'pending', token, new Date(), '', '', ''];
     if (i > 0) sh.getRange(i + 1, 1, 1, COLS.length).setValues([row]);
     else sh.appendRow(row);
   } finally { lock.releaseLock(); }
@@ -107,10 +93,10 @@ function onSignup(e) {
   const count = props.getProperty('CONFIRMS_DAY') === today ? +props.getProperty('CONFIRMS_N') : 0;
   if (count >= MAX_CONFIRMS_PER_DAY || MailApp.getRemainingDailyQuota() <= QUOTA_RESERVE) {
     Logger.log('Confirmation for ' + email + ' not sent (daily limit). They can sign up again tomorrow.');
-    return;
+    return 'limit';
   }
   props.setProperties({ CONFIRMS_DAY: today, CONFIRMS_N: String(count + 1) });
-  const link = webAppUrl_() + '?a=confirm&t=' + token;
+  const link = emailLink_('confirm', token);
   const hi = name ? 'Kia orana ' + esc_(name) + ',' : 'Kia orana,';
   MailApp.sendEmail({
     to: email, name: CLUB,
@@ -122,12 +108,51 @@ function onSignup(e) {
         `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-radius:10px;background:${P.acc}"><a href="${link}" style="display:inline-block;padding:13px 26px;${H}font-size:18px;letter-spacing:.06em;color:${P.ink};text-decoration:none">Confirm subscription</a></td></tr></table>` +
         `<p style="margin:20px 0 0;color:${P.mute};font-size:14px">If you didn't sign up, ignore this email and you won't hear from us.</p>` })
   });
+  return 'sent';
 }
 
+/** Stops a value starting with = + - @ being treated as a formula when the sheet is opened. */
+const cell_ = v => /^[=+\-@]/.test(v) ? "'" + v : v;
+
 /**
- * Confirm and unsubscribe links open a page with a button. The change happens
- * only when the button is pressed, so email link scanners that open links
- * automatically can't confirm or unsubscribe anyone.
+ * Requests from email.html on the website: the sign-up form (a=signup) and the confirm /
+ * unsubscribe buttons. Confirm and unsubscribe links in emails open that page, and the change
+ * happens only when its button is pressed, so email link scanners that open links automatically
+ * can't confirm or unsubscribe anyone. The pages are on the website rather than served by
+ * Apps Script, because Google puts a "This application was created by a Google Apps Script
+ * user" banner on Apps Script pages.
+ */
+function doPost(e) {
+  const p = (e && e.parameter) || {};
+  if (p.a === 'signup') return json_(signupReply_(p));
+  const a = p.a === 'unsub' || p.a === 'confirm' ? p.a : '';
+  const t = /^[0-9a-f-]{36}$/i.test(p.t || '') ? p.t : '';
+  let out;
+  if (!a || !t) out = { ok: false, msg: "This link isn't complete. Try the link in your email again." };
+  else {
+    try { out = { ok: true, msg: act(a, t) }; }
+    catch (err) { Logger.log('doPost: ' + err.message); out = { ok: false, msg: 'Something went wrong. Try again in a minute.' }; }
+  }
+  return json_(out);
+}
+
+function signupReply_(p) {
+  // "website" is a field people can't see: only bots fill it in. Pretend it worked.
+  const done = { ok: true, msg: "Thanks! Check your inbox (and spam folder) for an email from us, and tap the button in it to confirm." };
+  if (p.website) return done;
+  let r;
+  try { r = signup_(p.email, p.name); }
+  catch (err) { Logger.log('signup: ' + err.message); return { ok: false, msg: 'Something went wrong. Try again in a minute.' }; }
+  if (r === 'invalid') return { ok: false, msg: "That email address doesn't look right. Check it and try again." };
+  if (r === 'limit') return { ok: false, msg: "We can't send any more sign-up emails today. Please try again tomorrow." };
+  return done; // 'sent', or 'already' (same message, so the form doesn't reveal who's subscribed)
+}
+
+const json_ = o => ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+
+/**
+ * The old confirm / unsubscribe page, served by Apps Script (with Google's banner). Emails now
+ * link to email.html instead; this stays so links in emails sent before that still work.
  */
 function doGet(e) {
   const p = (e && e.parameter) || {};
@@ -150,7 +175,7 @@ function doGet(e) {
   return HtmlService.createHtmlOutput(html).setTitle(title + ' – ' + CLUB);
 }
 
-/** Called from the confirm / unsubscribe page. */
+/** Confirms or unsubscribes. Called by doPost (email.html) and the old doGet page. */
 function act(a, t) {
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
@@ -230,7 +255,7 @@ function weekMonday_(from) {
 }
 
 function sendWeekTo_(week, email, name, token) {
-  const unsub = token ? webAppUrl_() + '?a=unsub&t=' + token : '';
+  const unsub = token ? emailLink_('unsub', token) : '';
   const foot = 'Times are Rarotonga time. ' + (unsub
     ? `You subscribed on the ${CLUB} website. <a href="${unsub}" style="color:${P.mute};text-decoration:underline">Unsubscribe</a>`
     : 'Test email: subscribers get an unsubscribe link here.');
@@ -348,10 +373,9 @@ function sheet_() {
   return SpreadsheetApp.openById(id).getSheetByName(SHEET);
 }
 
-function webAppUrl_() {
-  const u = WEB_APP_URL || ScriptApp.getService().getUrl();
-  if (!u) throw new Error('Deploy the script as a web app and set WEB_APP_URL.');
-  return u;
+/** A confirm or unsubscribe link: the page on the website (email.html), which calls doPost. */
+function emailLink_(a, token) {
+  return SITE_URL + 'email.html?a=' + a + '&t=' + token;
 }
 
 /**

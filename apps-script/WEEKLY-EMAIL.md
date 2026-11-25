@@ -1,12 +1,18 @@
 # Week ahead email
 
-Visitors sign up on a Google Form and confirm by email. Every Sunday at about 7am Rarotonga time, they get an email
+Visitors sign up on the website and confirm by email. Every Sunday at about 7am Rarotonga time, they get an email
 listing the coming week's sessions and events (Monday to Saturday), plus league days and events coming up in the next 4 weeks.
 The events come from the same calendar feed as the website ([events-feed.gs](events-feed.gs)), so the email always
 matches the site. The email is sent from the Gmail account that owns the script.
 
-[`weekly-email.gs`](weekly-email.gs) does everything: the form, the subscriber list, the confirm and unsubscribe pages,
-and the Sunday send.
+Two parts work together:
+
+- [`email.html`](../email.html) on the website: the sign-up form, and the page that confirm and unsubscribe links in emails open.
+- [`weekly-email.gs`](weekly-email.gs), an Apps Script: the subscriber list (a Google Sheet), the emails and the Sunday send.
+  `email.html` sends sign-ups and button presses to it.
+
+The pages are on the website rather than served by Apps Script, because Google puts a
+"This application was created by a Google Apps Script user" banner on every Apps Script page.
 
 ## One-time setup
 
@@ -14,28 +20,37 @@ Do this in the account that should send the emails (the club Gmail for the live 
 
 1. Go to <https://script.google.com> › New project. Name it "PCI week ahead email".
    Replace the contents of `Code.gs` with [`weekly-email.gs`](weekly-email.gs).
-2. At the top, set `FEED_URL` to the events feed's `/exec` URL (the same as `CAL_FEED_URL` in `preview.html`).
-   Set `ADMIN_EMAIL` if warnings should go somewhere other than this account.
-3. Pick `setup` in the toolbar and press Run. Allow access when asked (forms, sheets, email and running on a schedule).
-   The Execution log shows two links: **the form** (for the website) and **the subscribers sheet**. Both are also in your Google Drive.
+2. At the top, set `FEED_URL` to the events feed's `/exec` URL (the same as `CAL_FEED_URL` in `preview.html`)
+   and `SITE_URL` to the website's address. Set `ADMIN_EMAIL` if warnings should go somewhere other than this account.
+3. Pick `setup` in the toolbar and press Run. Allow access when asked (sheets, email and running on a schedule).
+   The Execution log shows the link to **the subscribers sheet**. It's also in your Google Drive.
 4. Deploy › New deployment › **Web app**. Execute as: **Me**. Who has access: **Anyone**. Deploy and copy the `/exec` URL.
-   This is the page that confirm and unsubscribe links open.
-5. Paste that URL into `WEB_APP_URL` at the top of the script and save. Then Deploy › Manage deployments ›
-   edit (pencil) › Version: **New version** › Deploy, so the URL stays the same.
-6. In `preview.html`, set `SUBSCRIBE_URL` to the form link from step 3. The site then shows
-   "Get the week ahead by email" on the homepage and the Events tab.
+5. In [`email.html`](../email.html), set `WEB_APP_URL` to that URL and merge to `main`.
+6. In `preview.html`, `SUBSCRIBE_URL` is `'email.html'`, so the site shows "Get the week ahead by email" on the homepage
+   and the Events tab. Set it to `''` to hide the sign-up buttons.
 
-`setup` only runs once. Running it again just logs the form link.
+`setup` only runs once. Running it again just logs the sheet link.
+
+**After changing the script later**, use Deploy › Manage deployments › edit (pencil) › Version: **New version** › Deploy.
+The web app URL stays the same, so `email.html` doesn't need changing.
+
+### Moving from the Google Form
+
+Sign-ups used to come through a Google Form. If the project still has it, after deploying the new version:
+
+1. Triggers (the clock icon) › delete the **onSignup** trigger ("From form").
+2. Delete the "Week ahead emails" form from Google Drive, or close it (Responses › Accepting responses: off).
+3. The subscribers sheet may have a "Form Responses" tab. It's no longer used, so you can delete it. Keep the **Subscribers** tab.
 
 ## Testing
 
 - `previewWeek`: logs this week's email as text. Sends nothing.
 - `sendTestToMe`: emails this week's email to the account running the script. Doesn't touch the subscriber list.
-- Sign up on the form with your own address, confirm, then run `sendWeekly` to send the real thing to every confirmed subscriber.
+- Sign up on `email.html` with your own address, confirm, then run `sendWeekly` to send the real thing to every confirmed subscriber.
 
 ## The subscribers sheet
 
-One row per email address, in the **Subscribers** tab. The other tab holds the raw form responses.
+One row per email address, in the **Subscribers** tab.
 
 | Column | Meaning |
 |---|---|
@@ -51,10 +66,15 @@ The sheet holds people's email addresses. Keep it shared with the committee only
 New sign-ups get a "Confirm subscription" email and only start getting the weekly email once they confirm.
 This stops people signing up someone else's address. Every weekly email has an unsubscribe link.
 
-Both links open a page with a button, and nothing changes until the button is pressed. Some email services open links
+Both links open `email.html` with a button, and nothing changes until the button is pressed. Some email services open links
 automatically to check them for viruses, and that would otherwise confirm or unsubscribe people without them knowing.
 
-Signing up again with a confirmed address does nothing. Signing up again after unsubscribing sends a new confirmation email.
+Signing up again with a confirmed address does nothing (the form says the same thing either way, so it doesn't reveal who's subscribed).
+Signing up again after unsubscribing sends a new confirmation email.
+
+The sign-up form has a hidden field that only bots fill in; those sign-ups are ignored. Confirmation emails are capped at 20 a day.
+
+Emails sent before the move to `email.html` link to the old Apps Script page. That page still works (with Google's banner).
 
 ## Gmail's daily limit
 

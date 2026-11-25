@@ -506,8 +506,8 @@ const FB='https://www.facebook.com/profile.php?id=61572906476405';
 // DROPINS also feeds the weekly timetable on the Visitors page, so keep it current either way.
 const CAL_FEED_URL='https://script.google.com/macros/s/AKfycbyZUnUIvZzfO74bNgzacGXwDpkucXIn9DxVYVYzQZkncesPgE4IXhdwp75ZJErEiIE/exec';
 
-// Week ahead email: the sign-up Google Form link from apps-script/weekly-email.gs setup(). '' hides the sign-up buttons.
-const SUBSCRIBE_URL='https://docs.google.com/forms/d/e/1FAIpQLSeIyKT-ORf9Xh0i0UprxnvYN_bNmXFBIFuxrInvBlMt5GjUJA/viewform';
+// Week ahead email: the sign-up page (email.html, see apps-script/WEEKLY-EMAIL.md). '' hides the sign-up buttons.
+const SUBSCRIBE_URL='email.html';
 
 // Members drop-in sessions (weekly). day: 0=Sun..6=Sat. Shown 4 weeks ahead.
 const DROPINS=[
@@ -705,7 +705,7 @@ function viewCal(){
   if(!up.length)h+=`<p class="note">${calState==='ok'?'Nothing scheduled in this category yet.':CAL_MSG()}</p>`;
   h+=`<p class="note">Times are Rarotonga time. Drop-in sessions are for PCI members. New events are added here as they're confirmed.</p>`;
   return h}
-function subCard(){return SUBSCRIBE_URL?`<a class="subband" href="${esc(SUBSCRIBE_URL)}" target="_blank" rel="noopener"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/></svg></span><span class="txt"><b>Get the week ahead by email</b><span>Every Sunday morning: the week's drop-ins, league days and events. Free, unsubscribe any time.</span></span><span class="cta">Sign up</span></a>`:''}
+function subCard(){return SUBSCRIBE_URL?`<a class="subband" href="${esc(SUBSCRIBE_URL)}"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/></svg></span><span class="txt"><b>Get the week ahead by email</b><span>Every Sunday morning: the week's drop-ins, league days and events. Free, unsubscribe any time.</span></span><span class="cta">Sign up</span></a>`:''}
 
 function viewNews(){return `<h2>Club news</h2>${NEWS.map(newsCard).join('')}<a class="lk fb" href="${FB}" target="_blank" rel="noopener"><div class="ic">f</div><div class="txt"><b>More on Facebook</b><span>Pickleball Cook Islands</span></div><div class="go">→</div></a>`}
 

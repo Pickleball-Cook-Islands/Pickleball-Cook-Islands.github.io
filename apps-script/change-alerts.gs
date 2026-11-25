@@ -263,7 +263,7 @@ function sendChanges_(changes, win) {
 }
 
 function sendChangesTo_(mail, email, name, token) {
-  const unsub = token ? webAppUrl_() + '?a=unsub&t=' + token : '';
+  const unsub = token ? emailLink_('unsub', token) : '';
   const foot = 'Times are Rarotonga time. ' + (unsub
     ? `You subscribed on the ${CLUB} website. <a href="${unsub}" style="color:${P.mute};text-decoration:underline">Unsubscribe</a>`
     : 'Test email: subscribers get an unsubscribe link here.');
