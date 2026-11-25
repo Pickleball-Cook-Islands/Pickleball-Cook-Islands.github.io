@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
 <meta name="theme-color" content="#0A3014">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="PCI League" id="apptitle">
@@ -104,7 +105,7 @@ table.ext{min-width:max(100%,380px);width:max(100%,380px)}.xs{overflow-x:auto;-w
 </style>
 </head>
 <body>
-<header><img id="hlogo" alt="" hidden><b id="htitle"></b><a class="pcihome" href="../">← PCI HOME</a></header>
+<header><img id="hlogo" alt="" hidden><b id="htitle"></b><a class="pcihome" href="../preview.html">← PCI HOME</a></header>
 <main id="app"></main>
 <nav class="tabs" id="tabs"></nav>
 <script>
@@ -146,7 +147,7 @@ function viewHome(){
   h+=`<div class="tiles"><div class="tile t1" data-go="fix"><i>\u{1F4C5}</i>FIXTURES</div><div class="tile t2" data-go="lad"><i>\u{1F3C6}</i>LADDERS</div><div class="tile t3" data-go="me"><i>\u{1F3D3}</i>MY TEAM</div><div class="tile" data-go="subs"><i>\u{1F91D}</i>SUBS LIST</div></div>`;
   h+=`<div class="sect">THE SEASON</div><div class="card">${RNDS.length} rounds${FINALS?`, then <b>FINALS DAY \u2022 ${esc(FINALS.date.toUpperCase())}</b> at ${esc(FINALS.venue)}`:''}.<div class="divs">${DIVS.map(d=>`<span class="d${d}">${esc(short(d))}</span>`).join('')}</div></div>`;
   h+=`<div class="sect">LATEST NEWS</div>`+newsCards(NEWS.slice(0,1))+fbCard('PICKLEBALL COOK ISLANDS ON FACEBOOK','News, events and photos \u2013 follow the page');
-  h+=`<a class="pci" href="../"><img src="${PCI_LOGO}" alt="PCI"><span>PRESENTED BY PICKLEBALL COOK ISLANDS</span></a>`;
+  h+=`<a class="pci" href="../preview.html"><img src="${PCI_LOGO}" alt="PCI"><span>PRESENTED BY PICKLEBALL COOK ISLANDS</span></a>`;
   return h}
 function viewTeams(){
   let h=`<h2>TEAMS</h2>`;
@@ -231,7 +232,7 @@ function applyData(D){
   if(SEASON.shortName)document.getElementById('apptitle').content=SEASON.shortName;
   if(IMG.appIcon)document.getElementById('appicon').href=BASE+IMG.appIcon;
 }
-const fail=m=>{document.getElementById('app').innerHTML=`<div class="card">${m}</div><a class="btn" href="../">BACK TO PICKLEBALL COOK ISLANDS</a>`};
+const fail=m=>{document.getElementById('app').innerHTML=`<div class="card">${m}</div><a class="btn" href="../preview.html">BACK TO PICKLEBALL COOK ISLANDS</a>`};
 const NF='League not found. Head back to the Pickleball Cook Islands site and pick a league from there.';
 if(!/^[a-z0-9-]+$/.test(LID))fail(NF);
 else fetch(BASE+'league.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()})
