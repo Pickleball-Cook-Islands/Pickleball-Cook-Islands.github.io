@@ -34,16 +34,19 @@ const KINDS = {
   tournament: 'tourn', tourn: 'tourn', social: 'social'
 };
 
-function doGet(e) {
-  const fresh = e && e.parameter && e.parameter.fresh;
+// The feed is public, so every request is served from the cache: nobody can make each request
+// read the calendar and use up the account's daily Apps Script quota. To see changes straight
+// away, run testFeed() in the editor. Errors are logged here, not shown to visitors.
+function doGet() {
   const cache = CacheService.getScriptCache();
-  let body = fresh ? null : cache.get('events');
+  let body = cache.get('events');
   if (!body) {
     try {
       body = JSON.stringify(buildFeed());
       cache.put('events', body, CACHE_SECONDS);
     } catch (err) {
-      body = JSON.stringify({ error: String(err && err.message || err) });
+      console.error('Events feed: ' + (err && err.stack || err));
+      body = JSON.stringify({ error: 'The events feed is unavailable right now.' });
     }
   }
   return ContentService.createTextOutput(body).setMimeType(ContentService.MimeType.JSON);

@@ -69,12 +69,16 @@ This stops people signing up someone else's address. Every weekly email has an u
 Both links open `email.html` with a button, and nothing changes until the button is pressed. Some email services open links
 automatically to check them for viruses, and that would otherwise confirm or unsubscribe people without them knowing.
 
-Signing up again with a confirmed address does nothing (the form says the same thing either way, so it doesn't reveal who's subscribed).
+Signing up again with a confirmed address does nothing, and doesn't change their name (the form says the same thing either way, so it doesn't reveal who's subscribed).
+Signing up again while a confirmation is waiting sends nothing more for 24 hours (`RESEND_HOURS`); the first email's link still works.
+The confirmation email never includes the name typed into the form, because anyone can type any address into it. Names are kept to letters, spaces, apostrophes, hyphens and full stops.
 Signing up again after unsubscribing sends a new confirmation email.
 
 The sign-up form has a hidden field that only bots fill in; those sign-ups are ignored. Confirmation emails are capped at 20 a day.
 
-Emails sent before the move to `email.html` link to the old Apps Script page. That page still works (with Google's banner).
+Emails sent before the move to `email.html` link to the Apps Script URL. It now answers with a plain-text line pointing to the same link on `email.html`.
+
+**Don't add an HtmlService page to this project.** Any HtmlService page lets visitors call every function whose name doesn't end in `_` (`sendChangesNow`, `stopChangeAlerts`, `sendTestToMe` and so on) from their browser. Keep the web app to `doPost` and the plain-text `doGet`.
 
 ## Gmail's daily limit
 

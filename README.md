@@ -67,6 +67,13 @@ Keep the commas and quote marks exactly as they are. If the page shows "Could no
 3. Replace the files in its `images/` folder.
 4. Add one line to `LEAGUES` in the content block of `preview.html`, with the folder name as `id`. To link an event card to a specific league, add `league:'<id>'` to that event.
 
+## Security
+
+- **Content security policy.** Each page has a `Content-Security-Policy` meta tag near the top. It only lets the page load scripts and images from this site, fonts from Google Fonts, and data from the Apps Script feed and email scripts. If you add something from another site (an embedded map or video, an image hosted elsewhere, a new script URL), add that site to the policy on that page, or the browser will block it. Check the browser console for "Content Security Policy" errors.
+- **Links and images in content** must be `https://` links or files in this repository. Anything else (for example `javascript:` links) is dropped.
+- **Apps Script web apps** run as the club account. Never add an HtmlService page to the week ahead email project (see [apps-script/WEEKLY-EMAIL.md](apps-script/WEEKLY-EMAIL.md)).
+- `main` is the live site: anything merged there is public within minutes.
+
 ## Privacy
 
 This repository is public. Everything in a `league.json`, including subs' phone numbers, can be read by anyone and stays in the Git history even after it's removed. Only list numbers people have agreed to share publicly.

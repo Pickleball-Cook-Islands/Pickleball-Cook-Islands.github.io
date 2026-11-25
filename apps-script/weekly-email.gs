@@ -30,6 +30,7 @@ const COMING_UP_DAYS = 28;  // "Coming up" lists league days and events this far
 const QUOTA_RESERVE = 3;    // emails kept back for the admin warning and new sign-ups
 const WARN_AT = 80;         // warn the admin once this many people are subscribed
 const MAX_CONFIRMS_PER_DAY = 20; // caps confirmation emails, so form spam can't use up the Sunday quota
+const RESEND_HOURS = 24;    // one confirmation email per address in this time, so the form can't be used to flood someone's inbox
 
 const SHEET = 'Subscribers';
 const COLS = ['Email', 'Name', 'Status', 'Token', 'Signed up', 'Confirmed', 'Unsubscribed', 'Last sent'];
@@ -70,20 +71,23 @@ function setup() {
 function signup_(rawEmail, rawName) {
   const email = String(rawEmail || '').trim().toLowerCase().slice(0, 254);
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return 'invalid';
-  const name = String(rawName || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+  const name = cleanName_(rawName);
 
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
-  let row, token;
+  let token;
   try {
     const sh = sheet_();
     const data = sh.getDataRange().getValues();
     const i = data.findIndex((r, k) => k > 0 && String(r[C.Email]).toLowerCase() === email);
-    if (i > 0 && data[i][C.Status] === 'confirmed') {
-      if (name) sh.getRange(i + 1, C.Name + 1).setValue(cell_(name));
-      return 'already'; // nothing to send
-    }
+    // Already subscribed: change nothing. Anyone can type any address into the form, so it
+    // mustn't be able to rename an existing subscriber (the name is their email greeting).
+    if (i > 0 && data[i][C.Status] === 'confirmed') return 'already';
+    // A confirmation went to this address recently: don't send another, so the form can't be
+    // used to flood someone's inbox. The first email's link still works.
+    const last = i > 0 && data[i][C.Status] === 'pending' && data[i][C['Signed up']] instanceof Date ? data[i][C['Signed up']].getTime() : 0;
+    if (last && Date.now() - last < RESEND_HOURS * 3600000) return 'recent';
     token = Utilities.getUuid();
-    row = [cell_(email), cell_(name), 'pending', token, new Date(), '', '', ''];
+    const row = [cell_(email), cell_(name), 'pending', token, new Date(), '', '', ''];
     if (i > 0) sh.getRange(i + 1, 1, 1, COLS.length).setValues([row]);
     else sh.appendRow(row);
   } finally { lock.releaseLock(); }
@@ -97,22 +101,28 @@ function signup_(rawEmail, rawName) {
   }
   props.setProperties({ CONFIRMS_DAY: today, CONFIRMS_N: String(count + 1) });
   const link = emailLink_('confirm', token);
-  const hi = name ? 'Kia orana ' + esc_(name) + ',' : 'Kia orana,';
+  // No name in this email: it goes to whatever address was typed into the form, so nothing
+  // the person filling it in typed should appear in it.
   MailApp.sendEmail({
     to: email, name: CLUB,
     subject: 'Confirm your PCI week ahead emails',
-    body: (name ? 'Kia orana ' + name + ',' : 'Kia orana,') + '\n\nConfirm your subscription to the Pickleball Cook Islands week ahead email:\n' + link +
+    body: 'Kia orana,\n\nConfirm your subscription to the Pickleball Cook Islands week ahead email:\n' + link +
       "\n\nIf you didn't sign up, ignore this email and you won't hear from us.",
     htmlBody: shell_({ title: 'Confirm your subscription', preheader: 'One tap to start getting the PCI week ahead email.',
-      inner: `<p style="margin:0 0 12px">${hi}</p><p style="margin:0 0 20px">Tap the button to start getting the ${CLUB} week ahead email every Sunday morning: the week's drop-ins, league days and events.</p>` +
+      inner: `<p style="margin:0 0 12px">Kia orana,</p><p style="margin:0 0 20px">Tap the button to start getting the ${CLUB} week ahead email every Sunday morning: the week's drop-ins, league days and events.</p>` +
         `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-radius:10px;background:${P.acc}"><a href="${link}" style="display:inline-block;padding:13px 26px;${H}font-size:18px;letter-spacing:.06em;color:${P.ink};text-decoration:none">Confirm subscription</a></td></tr></table>` +
         `<p style="margin:20px 0 0;color:${P.mute};font-size:14px">If you didn't sign up, ignore this email and you won't hear from us.</p>` })
   });
   return 'sent';
 }
 
+/** A first name for the email greeting: letters, spaces, apostrophes, hyphens and full stops only, 40 characters at most. */
+function cleanName_(raw) {
+  return String(raw || '').normalize('NFC').replace(/[^\p{L}\p{M} '’.-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 40);
+}
+
 /** Stops a value starting with = + - @ being treated as a formula when the sheet is opened. */
-const cell_ = v => /^[=+\-@]/.test(v) ? "'" + v : v;
+const cell_ = v => /^[=+\-@\t\r]/.test(v) ? "'" + v : v;
 
 /**
  * Requests from email.html on the website: the sign-up form (a=signup) and the confirm /
@@ -130,7 +140,7 @@ function doPost(e) {
   let out;
   if (!a || !t) out = { ok: false, msg: "This link isn't complete. Try the link in your email again." };
   else {
-    try { out = { ok: true, msg: act(a, t) }; }
+    try { out = { ok: true, msg: act_(a, t) }; }
     catch (err) { Logger.log('doPost: ' + err.message); out = { ok: false, msg: 'Something went wrong. Try again in a minute.' }; }
   }
   return json_(out);
@@ -145,38 +155,31 @@ function signupReply_(p) {
   catch (err) { Logger.log('signup: ' + err.message); return { ok: false, msg: 'Something went wrong. Try again in a minute.' }; }
   if (r === 'invalid') return { ok: false, msg: "That email address doesn't look right. Check it and try again." };
   if (r === 'limit') return { ok: false, msg: "We can't send any more sign-up emails today. Please try again tomorrow." };
-  return done; // 'sent', or 'already' (same message, so the form doesn't reveal who's subscribed)
+  return done; // 'sent', 'already' or 'recent' (same message, so the form doesn't reveal who's subscribed)
 }
 
 const json_ = o => ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
 
 /**
- * The old confirm / unsubscribe page, served by Apps Script (with Google's banner). Emails now
- * link to email.html instead; this stays so links in emails sent before that still work.
+ * Links in emails sent before the move to email.html open this script directly. It answers
+ * with plain text pointing to the same link on the website, and changes nothing.
+ *
+ * Don't bring back an HtmlService page here. Any HtmlService page lets visitors call every
+ * function in this project whose name doesn't end in _ (sendChangesNow, stopChangeAlerts,
+ * setupChangeAlerts, sendTestToMe and so on) from their browser with google.script.run.
  */
 function doGet(e) {
   const p = (e && e.parameter) || {};
-  const a = p.a === 'unsub' ? 'unsub' : p.a === 'confirm' ? 'confirm' : '';
+  const a = p.a === 'unsub' || p.a === 'confirm' ? p.a : '';
   const t = /^[0-9a-f-]{36}$/i.test(p.t || '') ? p.t : '';
-  const title = a === 'unsub' ? 'Unsubscribe' : 'Confirm subscription';
-  const body = !a || !t
-    ? `<h1>${CLUB}</h1><p>This link isn't complete. Try the link in your email again.</p>`
-    : `<h1>${title}</h1><p id="m">${a === 'unsub'
-        ? 'Stop getting the PCI week ahead email?'
-        : 'Start getting the PCI week ahead email every Sunday morning?'}</p>
-       <button id="b" onclick="go()">${a === 'unsub' ? 'Unsubscribe' : 'Yes, subscribe me'}</button>
-       <script>function go(){var b=document.getElementById('b');b.disabled=true;b.textContent='One moment…';
-       google.script.run.withSuccessHandler(function(msg){document.getElementById('m').textContent=msg;b.remove()})
-       .withFailureHandler(function(){b.disabled=false;b.textContent='Try again'}).act('${a}','${t}')}</script>`;
-  const html = `<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">
-    <style>body{font-family:system-ui,sans-serif;max-width:480px;margin:40px auto;padding:0 16px;color:#0B2906}
-    h1{font-size:24px}button{background:#39FF14;color:#061D01;font-weight:700;padding:10px 18px;border-radius:8px;border:0;cursor:pointer;font-size:16px}a{color:#0B2906}</style>
-    ${body}<p style="margin-top:32px"><a href="${SITE_URL}" target="_top">${CLUB} website</a></p>`;
-  return HtmlService.createHtmlOutput(html).setTitle(title + ' – ' + CLUB);
+  const msg = a && t
+    ? `${CLUB}: this link has moved. Open this address to ${a === 'unsub' ? 'unsubscribe' : 'confirm your subscription'}:\n\n${emailLink_(a, t)}`
+    : `${CLUB}: this link isn't complete. Try the link in your email again, or visit ${SITE_URL}`;
+  return ContentService.createTextOutput(msg).setMimeType(ContentService.MimeType.TEXT);
 }
 
-/** Confirms or unsubscribes. Called by doPost (email.html) and the old doGet page. */
-function act(a, t) {
+/** Confirms or unsubscribes. Called by doPost (the buttons on email.html). */
+function act_(a, t) {
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const sh = sheet_();

@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#0A3014">
@@ -121,7 +123,8 @@ const short=d=>(DIV[d]&&DIV[d].short)||('DIV '+d);
 const TABS=[['home','HOME'],['me','MY TEAM'],['teams','TEAMS'],['fix','FIXTURES'],['lad','LADDERS'],['news','NEWS']];
 let tab='home', round=0, team='', subDiv=0, ext=false;
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const safeUrl=u=>{u=String(u||'').trim();return /^https?:\/\//i.test(u)?u:''};
 const divOf=t=>{for(const d in TEAMS)if(TEAMS[d].includes(t))return +d;return 0};
 function unseen(){const n=NEWS.length?NEWS[0].id:0;return n>(+ls(LID+'seen')||0)}
 function nav(){document.getElementById('tabs').innerHTML=TABS.map(([k,l])=>`<button class="${tab===k?'on':''}" data-t="${k}">${l}${k==='news'&&unseen()&&tab!=='news'?'<i class="dot"></i>':''}</button>`).join('');
@@ -193,10 +196,10 @@ function ladder(d){
   return `<div class="d${d}"><div class="divh">${DIVNAME[d]}</div>${ext?'<div class="xs">':''}<table class="${ext?'ext':''}"><colgroup>${cg}</colgroup><tr>${hd}</tr>`+
    rows.map((r,i)=>`<tr class="${FINALS&&i>=FINALS.qualifiers?'out':''}"><td class="pos">${i+1}</td><td>${esc(r.t)}</td>`+(ext?`<td>${r.w}</td><td>${r.l}</td><td class="pts">${r.pts}</td><td>${r.f}</td><td>${r.a}</td><td>${r.diff>0?'+':r.diff<0?'\u2212':''}${Math.abs(r.diff)}</td><td class="pct">${pc(r)}</td></tr>`:`<td>${r.p}</td><td>${r.w}</td><td>${r.l}</td><td class="pts">${r.pts}</td><td class="pct">${pc(r)}</td></tr>`)).join('')+`</table>${ext?'</div>':''}</div>`}
 function viewLad(){return `<h2>LADDERS</h2><div class="pills"><button class="${ext?'on':''}" data-ext="1">${ext?'\u2212 STANDARD TABLE':'+ EXTENDED TABLE'}</button></div>${DIVS.map(ladder).join('')}${ext?'<p class="note">PF = points for, PA = points against, +/\u2212 = points difference. Swipe the table sideways to see every column.</p>':''}<p class="note">2 points per win. Ties broken by for/against %, then points difference.${FINALS?` Top ${FINALS.qualifiers} in each division reach the finals.`:''} Scores are entered by PCI after each round. ${esc(UPDATED)}</p>`}
-function newsCards(list){return list.map(n=>`<div class="card"><div class="note" style="margin:0 0 4px">${esc(n.date)}</div><b>${esc(n.title)}</b><br>${esc(n.text)}${n.url?`<br><a href="${esc(n.url)}" target="_blank" rel="noopener" style="color:var(--acc)">READ MORE \u203A</a>`:''}</div>`).join('')}
+function newsCards(list){return list.map(n=>`<div class="card"><div class="note" style="margin:0 0 4px">${esc(n.date)}</div><b>${esc(n.title)}</b><br>${esc(n.text)}${safeUrl(n.url)?`<br><a href="${esc(safeUrl(n.url))}" target="_blank" rel="noopener" style="color:var(--acc)">READ MORE \u203A</a>`:''}</div>`).join('')}
 function intl(p){let d=String(p).replace(/[^\d+]/g,'');if(d.startsWith('+'))return d.slice(1);if(d.startsWith('00'))return d.slice(2);if(d.length===5)return '682'+d;return d}
 function subCard(x){const n=intl(x.phone), tel='+'+n;
-  return `<div class="sub"><h3>${esc(x.name)}</h3><div class="meta">${x.divs.map(d=>`<span class="d${d}" style="--c:var(--d${d})">DIV ${d}</span>`).join('')}${x.rank?`<em>RANK #${x.rank}</em>`:''}${x.note?`<em>${esc(x.note)}</em>`:''}</div>${n?`<div class="acts"><a href="tel:${tel}">CALL</a><a href="sms:${tel}">TEXT</a><a class="wa" href="https://wa.me/${n}" target="_blank" rel="noopener">WHATSAPP</a></div>`:''}</div>`}
+  return `<div class="sub"><h3>${esc(x.name)}</h3><div class="meta">${x.divs.map(d=>`<span class="d${d}" style="--c:var(--d${d})">DIV ${d}</span>`).join('')}${x.rank?`<em>RANK #${parseInt(x.rank,10)||''}</em>`:''}${x.note?`<em>${esc(x.note)}</em>`:''}</div>${n?`<div class="acts"><a href="tel:${tel}">CALL</a><a href="sms:${tel}">TEXT</a><a class="wa" href="https://wa.me/${n}" target="_blank" rel="noopener">WHATSAPP</a></div>`:''}</div>`}
 function viewSubs(){
   const d0=team?divOf(team):0; if(subDiv===0&&d0&&!window._subSet){subDiv=d0;window._subSet=1}
   let h=`<h2>SUBS LIST</h2><div class="card">Need a sub? Contact a player directly. Subs are ranked by the executive committee and can only play in the divisions shown.</div>`;

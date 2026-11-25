@@ -91,4 +91,4 @@ so update those if the regular timetable changes.
 Serve the site (`python3 -m http.server 8000`) and add `?events=<feed URL>` to load any feed, e.g. a saved JSON file:
 <http://localhost:8000/preview.html?events=test-events.json>. This only works on localhost.
 
-Add `?fresh=1` to the `/exec` URL in a browser to see the feed without the 5-minute cache.
+The public feed is always served from the 5-minute cache, so nobody can make every request read the calendar and use up the account's daily quota. To see changes straight away, run `testFeed` in the editor. If the feed fails, the details are in the project's Executions log, not in the feed.
