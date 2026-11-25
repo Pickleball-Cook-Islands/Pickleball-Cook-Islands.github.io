@@ -6,7 +6,7 @@ The site's Events tab, "Next session" panel and week strip come from the club's 
 [`events-feed.gs`](events-feed.gs) is a small Google Apps Script that reads the calendar and gives the site
 the upcoming events. Admins only ever use Google Calendar. Changes show on the site within about 5 minutes.
 
-Until `CAL_FEED_URL` in `index.html` is set, the site uses the lists typed into `index.html`
+Until `CAL_FEED_URL` in `preview.html` is set, the site uses the lists typed into `preview.html`
 (`DROPINS`, `DROPIN_CHANGES`, `EVENTS`) as before.
 
 ## One-time setup (calendar owner)
@@ -24,7 +24,7 @@ Do this in the account that should own the calendar (the club account for the li
    The Execution log shows the events the site will get.
 6. **Publish it.** Deploy › New deployment › type **Web app**. Execute as: **Me**. Who has access: **Anyone**. Deploy.
    Copy the Web app URL (ends in `/exec`).
-7. **Connect the site.** In `index.html`, set `const CAL_FEED_URL='<the /exec URL>';` and merge to `main`.
+7. **Connect the site.** In `preview.html`, set `const CAL_FEED_URL='<the /exec URL>';` and merge to `main`.
 
 After editing the script later, use Deploy › Manage deployments › edit (pencil) › Version: New version,
 so the URL stays the same.
@@ -83,12 +83,12 @@ Create each weekly drop-in once as a repeating event (Repeat › Weekly) with `#
 - **Changing the timetable from now on:** edit › **This and following events**.
 - **A special event replacing a drop-in:** delete or move that day's drop-in. The site no longer hides drop-ins automatically.
 
-The weekly timetable on the Visitors page and in the FAQ still comes from `DROPINS` and the FAQ text in `index.html`,
+The weekly timetable on the Visitors page and in the FAQ still comes from `DROPINS` and the FAQ text in `preview.html`,
 so update those if the regular timetable changes.
 
 ## Testing locally
 
 Serve the site (`python3 -m http.server 8000`) and add `?events=<feed URL>` to load any feed, e.g. a saved JSON file:
-<http://localhost:8000/?events=test-events.json>. This only works on localhost.
+<http://localhost:8000/preview.html?events=test-events.json>. This only works on localhost.
 
 Add `?fresh=1` to the `/exec` URL in a browser to see the feed without the 5-minute cache.

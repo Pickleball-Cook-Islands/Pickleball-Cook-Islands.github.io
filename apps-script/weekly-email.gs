@@ -15,7 +15,7 @@
  * sendWeekly() stops before the limit and emails ADMIN_EMAIL a warning.
  */
 
-// The events feed's /exec URL (the same as CAL_FEED_URL in index.html).
+// The events feed's /exec URL (the same as CAL_FEED_URL in preview.html).
 const FEED_URL = 'https://script.google.com/macros/s/AKfycbwGmW_mM3iPMEAdM343dqCNMXF_zY7fsacc4kegVaQVL6AxZOfC0VsOALmiRU-D5KgM/exec';
 // This script's own web app URL (ends in /exec). Fill in after the first deployment.
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxyykIm_4DX_JejIfnDOUh8earpWkGJr0HMsQfQRPqSY-Uc3Tv1N58wFo7WkW8L4CDH/exec';

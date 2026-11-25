@@ -14,7 +14,7 @@ Do this in the account that should send the emails (the club Gmail for the live 
 
 1. Go to <https://script.google.com> › New project. Name it "PCI week ahead email".
    Replace the contents of `Code.gs` with [`weekly-email.gs`](weekly-email.gs).
-2. At the top, set `FEED_URL` to the events feed's `/exec` URL (the same as `CAL_FEED_URL` in `index.html`).
+2. At the top, set `FEED_URL` to the events feed's `/exec` URL (the same as `CAL_FEED_URL` in `preview.html`).
    Set `ADMIN_EMAIL` if warnings should go somewhere other than this account.
 3. Pick `setup` in the toolbar and press Run. Allow access when asked (forms, sheets, email and running on a schedule).
    The Execution log shows two links: **the form** (for the website) and **the subscribers sheet**. Both are also in your Google Drive.
@@ -22,7 +22,7 @@ Do this in the account that should send the emails (the club Gmail for the live 
    This is the page that confirm and unsubscribe links open.
 5. Paste that URL into `WEB_APP_URL` at the top of the script and save. Then Deploy › Manage deployments ›
    edit (pencil) › Version: **New version** › Deploy, so the URL stays the same.
-6. In `index.html`, set `SUBSCRIBE_URL` to the form link from step 3. The site then shows
+6. In `preview.html`, set `SUBSCRIBE_URL` to the form link from step 3. The site then shows
    "Get the week ahead by email" on the homepage and the Events tab.
 
 `setup` only runs once. Running it again just logs the form link.

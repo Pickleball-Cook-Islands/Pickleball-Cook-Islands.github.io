@@ -2,7 +2,7 @@
  * Pickleball Cook Islands: events feed.
  *
  * Reads the club's shared Google Calendar and returns the upcoming events as
- * JSON for the website (index.html loads it from CAL_FEED_URL).
+ * JSON for the website (preview.html loads it from CAL_FEED_URL).
  *
  * Setup is in apps-script/README.md. In short: paste this file into a new
  * Apps Script project owned by the account that owns the calendar, set
